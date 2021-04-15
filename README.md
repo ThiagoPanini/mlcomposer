@@ -109,3 +109,58 @@ Installing collected packages: six, numpy, threadpoolctl, scipy, pytz, python-da
     Running setup.py install for shap ... done
 Successfully installed cycler-0.10.0 joblib-0.14.1 kiwisolver-1.3.1 llvmlite-0.36.0 matplotlib-3.4.1 mlcomposer-0.0.3 numba-0.53.1 numpy-1.18.5 pandas-1.1.5 pillow-8.2.0 pyparsing-2.4.7 python-dateutil-2.8.1 python-dotenv-0.17.0 pytz-2021.1 scikit-learn-0.23.2 scipy-1.6.2 seaborn-0.10.0 shap-0.37.0 six-1.15.0 slicer-0.0.3 threadpoolctl-2.1.0 tqdm-4.60.0
 ```
+
+## Utilização
+
+A partir desse ponto, a biblioteca `mlcomposer` pode ser importada em scripts Phyton que alocam processos de preparação e treinamento de modelos. Exemplos práticos podem ser encontrados neste repositório no diretório `examples/`. Ilustrando uma aplicação relacionada ao treinamento de um modelo de classificação binária com as funcionalidades do módulo `ml.trainer`, o código abaixo mostra como a aplicação de apenas duas funções podem gerar uma série de insights valiosos para o Cientista de Dados:
+
+```python
+# Instanciando objetos
+dtree = DecisionTreeClassifier(random_state=42)
+forest = RandomForestClassifier(random_state=42)
+svm = SVC(kernel='rbf', probability=True)
+
+# Criando dicionário set_classifiers
+model_obj = [svm, dtree, forest]
+model_names = [type(model).__name__ for model in model_obj]
+set_classifiers = {name: {'model': obj, 'params': {}} for (name, obj) in zip(model_names, model_obj)}
+
+# Instanciando novo objeto
+trainer = ClassificadorBinario()
+
+# Realizando treinamento e avaliação dos modelos
+trainer.training_flow(set_classifiers, X_train_prep, y_train, X_val_prep, y_val, 
+                      features=MODEL_FEATURES, metrics_output_path=METRICS_OUTPUT_PATH,
+                      models_output_path=MODELS_OUTPUT_PATH)
+
+# Gerando e salvando gráficos de análises visuais
+trainer.visual_analysis(features=MODEL_FEATURES, model_shap=MODEL_SHAP, 
+                        output_path=IMGS_OUTPUT_PATH)
+```
+
+As configurações acima aplicadas na execução dos métodos geram três principais diretórios, cada qual alocando ricos outputs relacionados ao processo de modelagem.
+
+```
+└── output
+    ├── imgs
+    │   ├── confusion_matrix.png
+    │   ├── feature_importances.png
+    │   ├── learning_curve.png
+    │   ├── metrics_comparison.png
+    │   ├── roc_curve.png
+    │   ├── score_bins_percent.png
+    │   ├── score_bins.png
+    │   ├── score_distribution.png
+    │   └── shap_analysis_RandomForestClassifier.png
+    ├── metrics
+    │   ├── metrics.csv
+    │   └── top_features.csv
+    └── models
+        ├── decisiontreeclassifier_20210414.pkl
+        ├── randomforestclassifier_20210414.pkl
+        └── svc_20210414.pkl
+```
+
+* No diretório `imgs`, são gerados gráficos de análises dos modelos treinados, como uma plotagem de eficiência, matriz de confusão, curva ROC, entre outros;
+* No diretório `metrics`, são disponibilizados arquivos analíticos de performance dos modelos e uma lista com as variáveis mais importantes de cada um;
+* No diretório `models`, são armazenados os arquivos pkl dos modelos treinados com uma referência de data no formato yyyyMMdd.
