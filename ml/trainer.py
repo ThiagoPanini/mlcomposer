@@ -26,10 +26,13 @@ Sumário
 # Bibliotecas padrão
 import pandas as pd
 import numpy as np
-import os
 import time
 from datetime import datetime
 import itertools
+from math import ceil
+import os
+from os import makedirs, getcwd
+from os.path import isdir, join
 
 # Modelagem 
 import joblib
@@ -45,9 +48,187 @@ import shap
 # Visualização
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.patches import Patch
+from matplotlib.axes import Axes
 import seaborn as sns
-from pycomp.viz.formatador import format_spines, AnnotateBars
-from math import ceil
+
+# AnnotateBars class (referência na classe)
+from dataclasses import dataclass
+from typing import *
+
+# Logging
+import logging
+
+
+"""
+---------------------------------------------------
+------------ 1. CONFIGURAÇÃO INICIAL --------------
+           1.2 Definindo objetos de log
+---------------------------------------------------
+"""
+
+def log_config(logger, level=logging.DEBUG, 
+               log_format='%(levelname)s;%(asctime)s;%(filename)s;%(module)s;%(lineno)d;%(message)s',
+               log_filepath=os.path.join(os.getcwd(), 'exec_log/execution_log.log'),
+               flag_file_handler=False, flag_stream_handler=True, filemode='a'):
+    """
+    Função que recebe um objeto logging e aplica configurações básicas ao mesmo
+
+    Parâmetros
+    ----------
+    :param logger: objeto logger criado no escopo do módulo [type: logging.getLogger()]
+    :param level: level do objeto logger criado [type: level, default: logging.DEBUG]
+    :param log_format: formato do log a ser armazenado [type: string]
+    :param log_filepath: caminho onde o arquivo .log será armazenado [type: string, default: 'log/application_log.log']
+    :param flag_file_handler: flag para salvamento de arquivo .log [type: bool, default=False]
+    :param flag_stream_handler: flag para verbosity do log no cmd [type: bool, default=True]
+    :param filemode: tipo de escrita no arquivo de log [type: string, default: 'a' (append)]
+
+    Retorno
+    -------
+    :return logger: objeto logger pré-configurado
+    """
+
+    # Setting level for the logger object
+    logger.setLevel(level)
+
+    # Creating a formatter
+    formatter = logging.Formatter(log_format, datefmt='%Y-%m-%d %H:%M:%S')
+
+    # Creating handlers
+    if flag_file_handler:
+        log_path = '/'.join(log_filepath.split('/')[:-1])
+        if not isdir(log_path):
+            makedirs(log_path)
+
+        # Adicionando file_handler
+        file_handler = logging.FileHandler(log_filepath, mode=filemode, encoding='utf-8')
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+    if flag_stream_handler:
+        # Adicionando stream_handler
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)    
+        logger.addHandler(stream_handler)
+
+    return logger
+
+# Definindo objeto de log
+logger = logging.getLogger(__file__)
+logger = log_config(logger)
+
+
+"""
+---------------------------------------------------
+--------- 1. FORMATAÇÃO DE EIXOS E RÓTULOS --------
+                1.1 Eixos de plotagens
+---------------------------------------------------
+"""
+
+# Formatando eixos do matplotlib
+def format_spines(ax, right_border=True):
+    """
+    Função responsável por modificar as bordas e cores de eixos do matplotlib
+
+    Parâmetros
+    ----------
+    :param ax: eixo do gráfico criado no matplotlib [type: matplotlib.pyplot.axes]
+    :param right_border: flag para plotagem ou ocultação da borda direita [type: bool, default=True]
+
+    Retorno
+    -------
+    Esta função não retorna nenhum parâmetro além do eixo devidamente customizado
+
+    Aplicação
+    ---------
+    fig, ax = plt.subplots()
+    format_spines(ax=ax, right_border=False)
+    """
+
+    # Definindo cores dos eixos
+    ax.spines['bottom'].set_color('#CCCCCC')
+    ax.spines['left'].set_color('#CCCCCC')
+    ax.spines['top'].set_visible(False)
+
+    # Validando plotagem da borda direita
+    if right_border:
+        ax.spines['right'].set_color('#CCCCCC')
+    else:
+        ax.spines['right'].set_color('#FFFFFF')
+    ax.patch.set_facecolor('#FFFFFF')
+
+
+"""
+---------------------------------------------------
+--------- 1. FORMATAÇÃO DE EIXOS E RÓTULOS --------
+        1.2 Criação e formatação de rótulos
+---------------------------------------------------
+"""
+
+# Referência: https://towardsdatascience.com/annotating-bar-charts-and-other-matplolib-techniques-cecb54315015
+# Criando allias
+#Patch = matplotlib.patches.Patch
+PosVal = Tuple[float, Tuple[float, float]]
+#Axis = matplotlib.axes.Axes
+Axis = Axes
+PosValFunc = Callable[[Patch], PosVal]
+
+@dataclass
+class AnnotateBars:
+    font_size: int = 10
+    color: str = "black"
+    n_dec: int = 2
+    def horizontal(self, ax: Axis, centered=False):
+        def get_vals(p: Patch) -> PosVal:
+            value = p.get_width()
+            div = 2 if centered else 1
+            pos = (
+                p.get_x() + p.get_width() / div,
+                p.get_y() + p.get_height() / 2,
+            )
+            return value, pos
+        ha = "center" if centered else  "left"
+        self._annotate(ax, get_vals, ha=ha, va="center")
+    def vertical(self, ax: Axis, centered:bool=False):
+        def get_vals(p: Patch) -> PosVal:
+            value = p.get_height()
+            div = 2 if centered else 1
+            pos = (p.get_x() + p.get_width() / 2,
+                   p.get_y() + p.get_height() / div
+            )
+            return value, pos
+        va = "center" if centered else "bottom"
+        self._annotate(ax, get_vals, ha="center", va=va)
+    def _annotate(self, ax, func: PosValFunc, **kwargs):
+        cfg = {"color": self.color,
+               "fontsize": self.font_size, **kwargs}
+        for p in ax.patches:
+            value, pos = func(p)
+            ax.annotate(f"{value:.{self.n_dec}f}", pos, **cfg)
+
+
+# Definindo funções úteis para plotagem dos rótulos no gráfico
+def make_autopct(values):
+    """
+    Função para configuração de rótulos em gráficos de rosca
+
+    Parâmetros
+    ----------
+    :param values: valores atrelados ao rótulo [type: np.array]
+
+    Retorno
+    -------
+    :return my_autopct: string formatada para plotagem dos rótulos
+    """
+
+    def my_autopct(pct):
+        total = sum(values)
+        val = int(round(pct * total / 100.0))
+
+        return '{p:.1f}%\n({v:d})'.format(p=pct, v=val)
+
+    return my_autopct
 
 
 """
@@ -268,10 +449,12 @@ class ClassificadorBinario:
                     output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/models')
                     model_ext = kwargs['model_ext'] if 'model_ext' in kwargs else 'pkl'
 
-                    self.save_model(model, output_path=output_path, filename=model_name.lower() + '.' + model_ext)
+                    anomesdia = datetime.now().strftime('%Y%m%d')
+                    self.save_model(model, output_path=output_path, 
+                                    filename=model_name.lower() + '_' +  anomesdia + '.' + model_ext)
 
         except AttributeError as ae:
-            logger.error('Erro ao treinar modelos. Exception lançada: {ae}')
+            logger.error(f'Erro ao treinar modelos. Exception lançada: {ae}')
             logger.warning(f'Treinamento do(s) modelo(s) não realizado')
 
     def compute_train_performance(self, model_name, estimator, X, y, cv=5):
@@ -480,7 +663,7 @@ class ClassificadorBinario:
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'metrics.csv'
             self.save_data(df_performances, output_path=output_path, filename=output_filename)
 
-        return df_performances
+        return df_performances.reset_index(drop=True)
 
     def feature_importance(self, features, top_n=-1, **kwargs):
         """
@@ -604,7 +787,7 @@ class ClassificadorBinario:
 
         # Treinando classificadores
         self.fit(set_classifiers, X_train, y_train, approach=approach, random_search=random_search, scoring=scoring,
-                 cv=cv, verbose=verbose, n_jobs=n_jobs, output_path=models_output_path)
+                 cv=cv, verbose=verbose, n_jobs=n_jobs, save=save, output_path=models_output_path)
 
         # Avaliando modelos
         self.evaluate_performance(X_train, y_train, X_test, y_test, save=save, output_path=metrics_output_path, 
