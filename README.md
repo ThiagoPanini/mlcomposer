@@ -28,7 +28,7 @@ Em sua versão atual, o pacote `mlcomposer` conta com o módulo `ml` responsáve
 
 Observando a tabela explicativa acima, percebe-se a quantidade de elementos disponibilizados previamente pelo pacote `mlcomposer` de modo a facilitar o trabalho do Cientista de Dados na preparação e modelagem dos dados. Na prática, os componentes entregues permitem que o cientista possa direcionar esforços para a real avaliação do melhor cenário dentro do contexto do projeto, evitando possíveis gargalos no desenvolvimento devido a necessidade de uma densa codificação para o retorno de insumos suficientes para que se possa partir para a etapa de produtizaçoã dos modelos.
 
-## Módulo ml.transformers
+### Módulo ml.transformers
 
 Visando detalhar as funcionalidades presentes em cada um dos submódulos do pacote, a lista abaixo contém todas as classes transformadoras presentes no submódulo `ml.transformers`. Em resumo, os blocos disponibilizados sob esse título representam, além de construções de classes voltadas especificamente para a transformação de dados, também uma forma fácil de encadear um pipeline completo de preparação. Para tal, as classes aqui disponibilizadas foram desenvolvidas herdando os elementos das classes `BaseTransformer e TransformerMixin` do scikit-learn, proporcionando assim uma integração dos métodos `fit()` e `transform()` de modo a gerar automaticamente o método `fit_transform()`. Com isso, os transformadores podem ser sequencialmente alocados na classe `Pipeline`, também oriunda do scikit-learn, permitindo a criação de fluxos completos de preparação sem a necessidade de codificações externas dentro do projeto.
 
@@ -49,3 +49,17 @@ Por fim, as classes transformadoras presentes neste módulo são:
 * **DynamicLogTransformation()** aplica transformação logaritma em um DataFrame baseado em um flag booleano de aplicação;
 * **DynamicScaler()**: aplica normalização em um DataFrame baseado em um flag booleano de aplicação;
 * **ConsumoModelo()**: gera um DataFrame final contendo a predição e o score de um determinado modelo já treinado;
+
+### Módulo ml.trainer
+
+Considerando as evoluções alcançadas na etapa de preparação dos dados com a utilização das funcionalidades do módulo `ml.transformers`, o módulo `ml.trainer` atua diretamente na utilização de uma base de dados devidamente preparada para treinar e avaliar diferentes modelos de Machine Learning a partir das mais variadas abordagens. Neste módulo, são propostas classes para cada tipo diferente de aprendizado, sendo elas:
+
+* **ClassificadorBinario()**: classe contendo diversos métodos responsáveis pelo treinamento e avaliação de modelos de classificação binária;
+* **ClassificadorMulticlass()**: classe contendo diversos métodos responsáveis pelo treinamento e avaliação de modelos de classificação multiclasse;
+* **RegressorLinear()**: classe contendo diversos métodos responsáveis pelo treinamento e avaliação de modelos de regressão linear;
+
+Dentro de cada uma dessas três classes, uma série de métodos são disponibilizados de modo a encapsular todo o treinamento, tunagem de hiperparâmetros, avaliação de métrics utilizando validação cruzada, avaliação visual de métricas e até persistências de modelos treinados em formato pkl. Os resultados proporcionados por esses métodos serão detalhados mais a frente na sessão de utilização prática do pacote.
+
+___
+
+## Instalação
