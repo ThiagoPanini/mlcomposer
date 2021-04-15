@@ -33,7 +33,7 @@ Observando a tabela explicativa acima, percebe-se a quantidade de elementos disp
 Visando detalhar as funcionalidades presentes em cada um dos submódulos do pacote, a lista abaixo contém todas as classes transformadoras presentes no submódulo `ml.transformers`. Em resumo, os blocos disponibilizados sob esse título representam, além de construções de classes voltadas especificamente para a transformação de dados, também uma forma fácil de encadear um pipeline completo de preparação. Para tal, as classes aqui disponibilizadas foram desenvolvidas herdando os elementos das classes `BaseTransformer e TransformerMixin` do scikit-learn, proporcionando assim uma integração dos métodos `fit()` e `transform()` de modo a gerar automaticamente o método `fit_transform()`. Com isso, os transformadores podem ser sequencialmente alocados na classe `Pipeline`, também oriunda do scikit-learn, permitindo a criação de fluxos completos de preparação sem a necessidade de codificações externas dentro do projeto.
 
 Por fim, as classes transformadoras presentes neste módulo são:
-* **FormataColunas()**: aplica padronização nas colunas de um objeto DataFrame a partir da aplicação dos métodos `lower()`, `strip()` e `replace()`;
+* **FormataColunas()**: aplica padronização nas colunas de um DataFrame a partir da aplicação dos métodos `lower()`, `strip()` e `replace()`;
 * **FiltraColunas()**: filtra colunas de um DataFrame;
 * **DefineTarget()**: aplica transformação binária na coluna target em uma base de dados (classe positiva=1 e classe negativa=0);
 * **EliminaDuplicatas()**: elimina duplicatas de um DataFrame através da aplicação do método `drop_duplicates()`
@@ -41,4 +41,11 @@ Por fim, as classes transformadoras presentes neste módulo são:
 * **AgrupamentoCategoricoInicial()**: agrupa categorias em colunas categóricas com muitas entradas;
 * **AgrupamentoCategoricoFinal()**: recebe um dicionário de entradas categóricas para agrupamento customizado nas colunas;
 * **ModificaTipoPrimitivo()**: transforma tipos primitivos de uma base através de um dicionário de referência;
-* 
+* **DummiesEncoding()**: aplica codificação em colunas categóricas a partir da aplicação do método `pd.get_dummies()`;
+* **PreencheDadosNulos()**: preenche dados nulos de um DataFrame a partir da aplicação do método `fillna()`;
+* **EliminaDadosNulos()**: elimina dados nulos de um DataFrame a partir da aplicação do método `dropna()`;
+* **SeletorTopFeatures()**: recebe o resultado do método `feature_importances_()` e filtra os top k índices;
+* **LogTransformation()**: aplica transformação logaritma em um DataFrame;
+* **DynamicLogTransformation()** aplica transformação logaritma em um DataFrame baseado em um flag booleano de aplicação;
+* **DynamicScaler()**: aplica normalização em um DataFrame baseado em um flag booleano de aplicação;
+* **ConsumoModelo()**: gera um DataFrame final contendo a predição e o score de um determinado modelo já treinado;
