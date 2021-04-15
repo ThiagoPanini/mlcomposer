@@ -63,3 +63,24 @@ Dentro de cada uma dessas três classes, uma série de métodos são disponibili
 ___
 
 ## Instalação
+
+A última versão do pacote `mlcomposer` encontra-se publicada no repositório <a href="https://pypi.org/project/mlcomposer/">PyPI</a>.
+
+> :pushpin: **Nota:** como boa prática de utilização em qualquer projeto Python, a construção de um <a href="">ambiente virtual</a> se faz necessária para um maior controle das funcionalidades e das dependências atreladas ao código. Para tal, o bloco abaixo considera os códigos necessários a serem executados no cmd para a criação de ambientes virtuais Python nos sistemas Linux e Windows.
+> 
+
+```bash
+# Criação e ativação de venv no linux
+$ python -m venv <path_venv>/<nome_venv>
+$ source <path_venv>/<nome_venv>/bin/activate
+
+# Criação e ativação de venv no windows
+$ python -m venv <path_venv>/<nome_venv>
+$ <path_venv>/<nome_venv>/Scripts/activate
+```
+
+Com o ambiente virtual ativo, basta realizar a instalação do pacote através do comando `pip`:
+
+```bash
+$ pip install mlcomposer
+```
