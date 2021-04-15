@@ -50,6 +50,8 @@ Por fim, as classes transformadoras presentes neste módulo são:
 * **DynamicScaler()**: aplica normalização em um DataFrame baseado em um flag booleano de aplicação;
 * **ConsumoModelo()**: gera um DataFrame final contendo a predição e o score de um determinado modelo já treinado;
 
+___
+
 ### Módulo ml.trainer
 
 Considerando as evoluções alcançadas na etapa de preparação dos dados com a utilização das funcionalidades do módulo `ml.transformers`, o módulo `ml.trainer` atua diretamente na utilização de uma base de dados devidamente preparada para treinar e avaliar diferentes modelos de Machine Learning a partir das mais variadas abordagens. Neste módulo, são propostas classes para cada tipo diferente de aprendizado, sendo elas:
@@ -66,7 +68,7 @@ ___
 
 A última versão do pacote `mlcomposer` encontra-se publicada no repositório <a href="https://pypi.org/project/mlcomposer/">PyPI</a>.
 
-> :pushpin: **Nota:** como boa prática de utilização em qualquer projeto Python, a construção de um <a href="">ambiente virtual</a> se faz necessária para um maior controle das funcionalidades e das dependências atreladas ao código. Para tal, o bloco abaixo considera os códigos necessários a serem executados no cmd para a criação de ambientes virtuais Python nos sistemas Linux e Windows.
+> :pushpin: **Nota:** como boa prática de utilização em qualquer projeto Python, a construção de um <a href="https://realpython.com/python-virtual-environments-a-primer/">ambiente virtual</a> se faz necessária para um maior controle das funcionalidades e das dependências atreladas ao código. Para tal, o bloco abaixo considera os códigos necessários a serem executados no cmd para a criação de ambientes virtuais Python nos sistemas Linux e Windows.
 > 
 
 ```bash
@@ -79,8 +81,31 @@ $ python -m venv <path_venv>/<nome_venv>
 $ <path_venv>/<nome_venv>/Scripts/activate
 ```
 
-Com o ambiente virtual ativo, basta realizar a instalação do pacote através do comando `pip`:
+Com o ambiente virtual ativo, basta realizar a atualização do `pip` seguida da instalação do pacote:
 
 ```bash
+$ pip install --upgrade pip
 $ pip install mlcomposer
+```
+
+Como mencionado anteriormente, a construção do pacote `mlcomposer` é feita utilizando, como pilar, bibliotecas de modelagem fundamental em Python. Dessa forma, ao realizar a instação no ambiente virtual, é esperado que outras bibliteocas dependentes também sejam instaladas. O output esperado no prompt de comando após a instalação deve ser semelhante ao ilustrado abaixo:
+
+```
+Collecting mlcomposer
+  Downloading mlcomposer-0.0.3-py3-none-any.whl (2.4 kB)
+Collecting numpy==1.18.5
+  Downloading numpy-1.18.5-cp38-cp38-manylinux1_x86_64.whl (20.6 MB)
+     |████████████████████████████████| 20.6 MB 2.6 MB/s 
+Collecting shap==0.37.0
+  Downloading shap-0.37.0.tar.gz (326 kB)
+     |████████████████████████████████| 326 kB 3.0 MB/s 
+Collecting scikit-learn==0.23.2
+  Downloading scikit_learn-0.23.2-cp38-cp38-manylinux1_x86_64.whl (6.8 MB)
+     |████████████████████████████████| 6.8 MB 3.1 MB/s 
+Collecting seaborn==0.10.0
+  Downloading seaborn-0.10.0-py3-none-any.whl (215 kB)
+[...]
+Installing collected packages: six, numpy, threadpoolctl, scipy, pytz, python-dateutil, pyparsing, pillow, llvmlite, kiwisolver, joblib, cycler, tqdm, slicer, scikit-learn, pandas, numba, matplotlib, shap, seaborn, python-dotenv, mlcomposer
+    Running setup.py install for shap ... done
+Successfully installed cycler-0.10.0 joblib-0.14.1 kiwisolver-1.3.1 llvmlite-0.36.0 matplotlib-3.4.1 mlcomposer-0.0.3 numba-0.53.1 numpy-1.18.5 pandas-1.1.5 pillow-8.2.0 pyparsing-2.4.7 python-dateutil-2.8.1 python-dotenv-0.17.0 pytz-2021.1 scikit-learn-0.23.2 scipy-1.6.2 seaborn-0.10.0 shap-0.37.0 six-1.15.0 slicer-0.0.3 threadpoolctl-2.1.0 tqdm-4.60.0
 ```
