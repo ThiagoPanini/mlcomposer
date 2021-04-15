@@ -28,6 +28,17 @@ Em sua versão atual, o pacote `mlcomposer` conta com o módulo `ml` responsáve
 
 Observando a tabela explicativa acima, percebe-se a quantidade de elementos disponibilizados previamente pelo pacote `mlcomposer` de modo a facilitar o trabalho do Cientista de Dados na preparação e modelagem dos dados. Na prática, os componentes entregues permitem que o cientista possa direcionar esforços para a real avaliação do melhor cenário dentro do contexto do projeto, evitando possíveis gargalos no desenvolvimento devido a necessidade de uma densa codificação para o retorno de insumos suficientes para que se possa partir para a etapa de produtizaçoã dos modelos.
 
-## transformers
+## Módulo ml.transformers
 
-Visando detalhar as funcionalidades presentes em cada um dos submódulos do pacote, a lista abaixo contém todas as classes transformadoras presentes no submódulo `ml.transformers`. Em resumo, os blocos disponibilizados sob esse título representam, além de construções de classes voltadas especificamente para a transformação de dados, também uma forma fácil de encadear um pipeline completo de preparação. Para tal, as classes aqui disponibilizadas foram desenvolvidas herdando os elementos das classes `BaseTransformer e TransformerMixin` do scikit-learn, proporcionando assim uma integração dos métodos `fit()` e `transform()` de modo a gerar automaticamente o método `fit_transform()`. Com isso, os transformadores podem ser sequencialmente alocados na classe `Pipeline`, também oriunda do scikit-learn, 
+Visando detalhar as funcionalidades presentes em cada um dos submódulos do pacote, a lista abaixo contém todas as classes transformadoras presentes no submódulo `ml.transformers`. Em resumo, os blocos disponibilizados sob esse título representam, além de construções de classes voltadas especificamente para a transformação de dados, também uma forma fácil de encadear um pipeline completo de preparação. Para tal, as classes aqui disponibilizadas foram desenvolvidas herdando os elementos das classes `BaseTransformer e TransformerMixin` do scikit-learn, proporcionando assim uma integração dos métodos `fit()` e `transform()` de modo a gerar automaticamente o método `fit_transform()`. Com isso, os transformadores podem ser sequencialmente alocados na classe `Pipeline`, também oriunda do scikit-learn, permitindo a criação de fluxos completos de preparação sem a necessidade de codificações externas dentro do projeto.
+
+Por fim, as classes transformadoras presentes neste módulo são:
+* **FormataColunas()**: aplica padronização nas colunas de um objeto DataFrame a partir da aplicação dos métodos `lower()`, `strip()` e `replace()`;
+* **FiltraColunas()**: filtra colunas de um DataFrame;
+* **DefineTarget()**: aplica transformação binária na coluna target em uma base de dados (classe positiva=1 e classe negativa=0);
+* **EliminaDuplicatas()**: elimina duplicatas de um DataFrame através da aplicação do método `drop_duplicates()`
+* **SplitDados()**: realiza a separação de uma base de dados em treino e teste através da função `train_test_split()`
+* **AgrupamentoCategoricoInicial()**: agrupa categorias em colunas categóricas com muitas entradas;
+* **AgrupamentoCategoricoFinal()**: recebe um dicionário de entradas categóricas para agrupamento customizado nas colunas;
+* **ModificaTipoPrimitivo()**: transforma tipos primitivos de uma base através de um dicionário de referência;
+* 
