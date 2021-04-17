@@ -114,15 +114,16 @@ def log_config(logger, level=logging.DEBUG,
 
     return logger
 
-# Definindo objeto de log
+
+# Configurando objeto de log
 logger = logging.getLogger(__file__)
 logger = log_config(logger)
 
 
 """
 ---------------------------------------------------
---------- 1. FORMATAÇÃO DE EIXOS E RÓTULOS --------
-                1.1 Eixos de plotagens
+------------ 1. CONFIGURAÇÃO INICIAL --------------
+   1.2 Eixos de plotagem e formatação de rótulos
 ---------------------------------------------------
 """
 
@@ -158,13 +159,6 @@ def format_spines(ax, right_border=True):
         ax.spines['right'].set_color('#FFFFFF')
     ax.patch.set_facecolor('#FFFFFF')
 
-
-"""
----------------------------------------------------
---------- 1. FORMATAÇÃO DE EIXOS E RÓTULOS --------
-        1.2 Criação e formatação de rótulos
----------------------------------------------------
-"""
 
 # Referência: https://towardsdatascience.com/annotating-bar-charts-and-other-matplolib-techniques-cecb54315015
 # Criando allias
@@ -233,6 +227,130 @@ def make_autopct(values):
 
 """
 ---------------------------------------------------
+------------ 1. CONFIGURAÇÃO INICIAL --------------
+  1.3 Funções estáticas para salvamento de objetos
+---------------------------------------------------
+"""
+
+# Função responsável por salvar arquivos csv
+def save_data(data, output_path, filename):
+    """
+    Método responsável por salvar objetos DataFrame em formato csv.
+
+    Parâmetros
+    ----------
+    :param data: arquivo/objeto a ser salvo [type: pd.DataFrame]
+    :param output_path: referência de diretório destino [type: string]
+    :param filename: referência do nome do arquivo a ser salvo [type: string]
+
+    Retorno
+    -------
+    Este método não retorna nenhum parâmetro além do arquivo devidamente salvo no diretório
+
+    Aplicação
+    ---------
+    df = file_generator_method()
+    self.save_result(df, output_path=OUTPUT_PATH, filename='arquivo.csv')
+    """
+
+    # Verificando se diretório existe
+    if not os.path.isdir(output_path):
+        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
+        try:
+            os.makedirs(output_path)
+        except Exception as e:
+            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
+            return
+
+    logger.debug(f'Salvando arquivo no diretório especificado')
+    try:
+        output_file = os.path.join(output_path, filename)
+        data.to_csv(output_file, index=False)
+    except Exception as e:
+        logger.error(f'Erro ao salvar arquivo {filename}. Exception lançada: {e}')
+
+# Função responsável por salvar modelos em formato pkl
+def save_model(model, output_path, filename):
+    """
+    Método responsável por salvar modelos treinado em fomato pkl.
+
+    Parâmetros
+    ----------
+    :param model: objeto a ser salvo [type: model]
+    :param output_path: referência de diretório destino [type: string]
+    :param filename: referência do nome do modelo a ser salvo [type: string]
+
+    Retorno
+    -------
+    Este método não retorna nenhum parâmetro além do objeto devidamente salvo no diretório
+
+    Aplicação
+    ---------
+    model = classifiers['estimator']
+    self.save_model(model, output_path=OUTPUT_PATH, filename='model.pkl')
+    """
+
+    # Verificando se diretório existe
+    if not os.path.isdir(output_path):
+        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
+        try:
+            os.makedirs(output_path)
+        except Exception as e:
+            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
+            return
+
+    logger.debug(f'Salvando modelo pkl no diretório especificado')
+    try:
+        output_file = os.path.join(output_path, filename)
+        joblib.dump(model, output_file)
+    except Exception as e:
+        logger.error(f'Erro ao salvar modelo {filename}. Exception lançada: {e}')
+
+# Função responsável por salvar imagens em formato png
+def save_fig(fig, output_path, img_name, tight_layout=True, dpi=300):
+    """
+    Método responsável por salvar imagens geradas pelo matplotlib/seaborn
+
+    Parâmetros
+    ----------
+    :param fig: figura criada pelo matplotlib para a plotagem gráfica [type: plt.figure]
+    :param output_file: caminho final a ser salvo (+ nome do arquivo em formato png) [type: string]
+    :param tight_layout: flag que define o acerto da imagem [type: bool, default=True]
+    :param dpi: resolução da imagem a ser salva [type: int, default=300]
+
+    Retorno
+    -------
+    Este método não retorna nenhum parâmetro além do salvamento da imagem em diretório especificado
+
+    Aplicação
+    ---------
+    fig, ax = plt.subplots()
+    save_fig(fig, output_file='imagem.png')
+    """
+
+    # Verificando se diretório existe
+    if not os.path.isdir(output_path):
+        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
+        try:
+            os.makedirs(output_path)
+        except Exception as e:
+            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
+    
+    # Acertando layout da imagem
+    if tight_layout:
+        fig.tight_layout()
+    
+    logger.debug('Salvando imagem no diretório especificado')
+    try:
+        output_file = os.path.join(output_path, img_name)
+        fig.savefig(output_file, dpi=300)
+        logger.info(f'Imagem salva com sucesso em {output_file}')
+    except Exception as e:
+        logger.error(f'Erro ao salvar imagem. Exception lançada: {e}')
+
+
+"""
+---------------------------------------------------
 --------------- 2. CLASSIFICAÇÃO ------------------
            2.1 Classificador Binário
 ---------------------------------------------------
@@ -249,7 +367,7 @@ class ClassificadorBinario:
         """
         Método construtor inicializa dicionário de informações dos modelos treinados
         """
-        self.classifiers_info = {}
+        self.classifiers_info = {}      
 
     def save_data(self, data, output_path, filename):
         """
@@ -793,7 +911,7 @@ class ClassificadorBinario:
         self.evaluate_performance(X_train, y_train, X_test, y_test, save=save, output_path=metrics_output_path, 
                                   output_filename=metrics_output_filename)
 
-        # Analisando Features mais importantes
+        # Analisando features mais importantes
         self.feature_importance(features, top_n=top_n_featimp, save=save, output_path=metrics_output_path, 
                                 output_filename=featimp_output_filename)
 
@@ -1826,7 +1944,9 @@ class ClassificadorMulticlasse:
                     output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/models')
                     model_ext = kwargs['model_ext'] if 'model_ext' in kwargs else 'pkl'
 
-                    self.save_model(model, output_path=output_path, filename=model_name.lower() + '.' + model_ext)
+                    anomesdia = datetime.now().strftime('%Y%m%d')
+                    save_model(model, output_path=output_path, 
+                                    filename=model_name.lower() + '_' +  anomesdia + '.' + model_ext)
 
         except AttributeError as ae:
             logger.error(f'Erro ao treinar modelos. Exception lançada: {ae}')
@@ -1876,6 +1996,7 @@ class ClassificadorMulticlasse:
             else:
                 n_classes = len(cr) - 3
                 acc = cr.loc['accuracy', :].values
+                acc = [acc[0]] * n_classes
             
             # Customizando classification report
             cr_custom = cr.iloc[:n_classes, :-1]
@@ -1943,6 +2064,7 @@ class ClassificadorMulticlasse:
             else:
                 n_classes = len(cr) - 3
                 acc = cr.loc['accuracy', :].values
+                acc = [acc[0]] * n_classes
                 
             # Customizando classification report
             cr_custom = cr.iloc[:n_classes, :-1]
@@ -2024,7 +2146,7 @@ class ClassificadorMulticlasse:
                                                                cv=cv, target_names=target_names)
             val_performance = self.compute_val_performance(model_name, estimator, X_val, y_val, 
                                                            target_names=target_names)
-
+    
             # Adicionando os resultados ao atributo classifiers_info
             self.classifiers_info[model_name]['train_performance'] = train_performance
             self.classifiers_info[model_name]['val_performance'] = val_performance
@@ -2047,9 +2169,138 @@ class ClassificadorMulticlasse:
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/metrics')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'metrics.csv'
-            self.save_data(df_performances, output_path=output_path, filename=output_filename)
+            save_data(df_performances, output_path=output_path, filename=output_filename)
 
         return df_performances
+
+    def feature_importance(self, features, top_n=-1, **kwargs):
+        """
+        Método responsável por retornar a importância das features de um modelo treinado
+        
+        Parâmetros
+        ----------
+        :param features: lista contendo as features de um modelo [type: list]
+        :param top_n: parâmetro para filtragem das top n features [type: int, default=-1]
+        :param **kwargs: argumentos adicionais do método
+            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
+            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/metrics']
+            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='top_features.csv']
+
+        Retorno
+        -------
+        :return: all_feat_imp: pandas DataFrame com a análise de feature importance dos modelos [type: pd.DataFrame]
+        """
+
+        # Inicializando DataFrame vazio para armazenamento das feature importance
+        feat_imp = pd.DataFrame({})
+        all_feat_imp = pd.DataFrame({})
+
+        # Iterando sobre os modelos presentes na classe
+        for model_name, model_info in self.classifiers_info.items():
+            # Validando possibilidade de extrair a importância das features do modelo
+            logger.debug(f'Extraindo importância das features para o modelo {model_name}')
+
+            try:
+                importances = model_info['estimator'].feature_importances_
+            except KeyError as ke:
+                logger.warning(f'Modelo {model_name} não treinado, sendo impossível extrair o método feature_importances_')
+                continue
+            except AttributeError as ae:
+                logger.warning(f'Modelo {model_name} não possui o método feature_importances_')
+                continue
+
+            # Preparando o dataset para armazenamento das informações
+            feat_imp['feature'] = features
+            feat_imp['importance'] = importances
+            feat_imp['model'] = model_name
+            feat_imp['anomesdia_datetime'] = datetime.now()
+            feat_imp.sort_values(by='importance', ascending=False, inplace=True)
+            feat_imp = feat_imp.loc[:, ['model', 'feature', 'importance', 'anomesdia_datetime']]
+
+            # Salvando essa informação no dicionário classifiers_info
+            self.classifiers_info[model_name]['feature_importances'] = feat_imp
+            all_feat_imp = all_feat_imp.append(feat_imp)
+            logger.info(f'Extração da importância das features concluída com sucesso para o modelo {model_name}')
+
+        # Validando salvamento dos resultados
+        if 'save' in kwargs and bool(kwargs['save']):
+            output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/metrics')
+            output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'top_features.csv'
+            save_data(all_feat_imp, output_path=output_path, filename=output_filename)
+        
+        return all_feat_imp
+
+    def training_flow(self, set_classifiers, X_train, y_train, X_test, y_test, features, **kwargs):
+        """
+        Método responsável por consolidar um fluxo completo de treinamento dos classificadores, bem como
+        o levantamento de métricas e execução de métodos adicionais para escolha do melhor modelo
+
+        Parâmetros
+        ----------
+        :param set_classifiers: dicionário contendo informações dos modelos a serem treinados [type: dict]
+            set_classifiers = {
+                'model_name': {
+                    'model': __estimator__,
+                    'params': __estimator_params__
+                }
+            }
+        :param X_train: conjunto de features do modelo contido nos dados de treino [type: np.array]
+        :param y_train: array contendo a variável resposta dos dados de treino do modelo [type: np.array]
+        :param X_test: conjunto de features do modelo contido nos dados de teste [type: np.array]
+        :param y_test: array contendo a variável resposta dos dados de teste do modelo [type: np.array]
+        :param features: lista contendo as features de um modelo [type: list]
+        :param output_path: caminho onde o arquivo de resultados será salvo: [type: string, default=os.path.join(os.path.getcwd(), 'output/')]
+        :param **kwargs: argumentos adicionais do método
+            :arg approach: indicativo de sufixo para armazenamento no atributo classifiers_info [type: string, default: '']
+            :arg random_search: flag para aplicação do RandomizedSearchCV [type: bool, default: False]
+            :arg scoring: métrica a ser otimizada pelo RandomizedSearchCV [type: string, default: 'accuracy']
+            :arg cv: K-folds utiliados na validação cruzada [type: int, default: 5]
+            :arg verbose: nível de verbosity da busca aleatória [type: int, default: 5]
+            :arg n_jobs: quantidade de jobs aplicados durante a busca dos hiperparâmetros [type: int, default: -1]
+            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
+            :arg models_output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/models']
+            :arg metrics_output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/metrics']
+            :arg metrics_output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='metrics.csv']
+            :arg featimp_output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='top_features.csv']
+            :arg top_n_featimp: top features a serem analisadas na importância das features [type: int, default=-1]
+
+        Retorno
+        -------
+        None
+
+        Aplicação
+        ---------
+        # Instanciando objeto
+        trainer = ClassificadorBinario()
+        trainer.training_flow(set_classifiers, X_train, y_train, X_test, y_test, features)
+        """
+
+        # Extraindo parâmetros kwargs
+        approach = kwargs['approach'] if 'approach' in kwargs else ''
+        random_search = kwargs['random_search'] if 'random_search' in kwargs else False
+        scoring = kwargs['scoring'] if 'scoring' in kwargs else 'accuracy'
+        cv = kwargs['cv'] if 'cv' in kwargs else 5
+        verbose = kwargs['verbose'] if 'verbose' in kwargs else -1
+        n_jobs = kwargs['n_jobs'] if 'n_jobs' in kwargs else -1
+        save = bool(kwargs['save']) if 'save' in kwargs else True
+        models_output_path = kwargs['models_output_path'] if 'models_output_path' in kwargs else os.path.join(os.getcwd(), 'output/models')
+        metrics_output_path = kwargs['metrics_output_path'] if 'metrics_output_path' in kwargs else os.path.join(os.getcwd(), 'output/metrics')
+        metrics_output_filename = kwargs['metrics_output_filename'] if 'metrics_output_filename' in kwargs else 'metrics.csv'
+        featimp_output_filename = kwargs['featimp_output_filename'] if 'featimp_output_filename' in kwargs else 'top_features.csv'
+        top_n_featimp = kwargs['top_n_featimp'] if 'top_n_featimp' in kwargs else -1
+        target_names = kwargs['target_names'] if 'target_names' in kwargs else list(range(len(np.unique(y_train))))
+
+        # Treinando classificadores
+        self.fit(set_classifiers, X_train, y_train, approach=approach, random_search=random_search, scoring=scoring,
+                 cv=cv, verbose=verbose, n_jobs=n_jobs, save=save, output_path=models_output_path)
+
+        # Avaliando modelos
+        self.evaluate_performance(X_train, y_train, X_test, y_test, save=save, output_path=metrics_output_path, 
+                                  target_names=target_names, output_filename=metrics_output_filename)
+
+        # Analisando features mais importantes
+        self.feature_importance(features, top_n=top_n_featimp, save=save, output_path=metrics_output_path, 
+                                output_filename=featimp_output_filename)
 
     def plot_metrics(self, df_metrics=None, idx_cols=['model', 'class', 'approach'], 
                  value_cols=['accuracy', 'precision', 'recall', 'f1-score'], font_scale=1.2,
@@ -2089,6 +2340,8 @@ class ClassificadorMulticlasse:
         Este método não retorna nenhum parâmetro além da plotagem devidamente salva no diretório destino
         """
 
+        
+
         # Verificando a necessidade de calcular as métricas
         if df_metrics is None:
             # Retornando elementos necessários para o cálculo da performance
@@ -2097,11 +2350,11 @@ class ClassificadorMulticlasse:
                 y_train = kwargs['y_train']
                 X_val = kwargs['X_val']
                 y_val = kwargs['y_val']
-                target_names = kwargs['target_names']
+                target_names = kwargs['target_names'] if 'target_names' in kwargs else list(range(len(np.unique(y_train))))
                 df_metrics = self.evaluate_performance(X_train, y_train, X_val, y_val, 
                                                        target_names=target_names)
             except Exception as e:
-                print(f'Erro ao computar as métricas. Exception lançada: {e}')
+                logger.error(f'Não foi inserido o argumento df_metrics e nem X e y para calculo. Exception lançada: {e}')
                 return
 
         # Pivotando DataFrame de métricas de modo a facilitar a plotagem
@@ -2123,6 +2376,12 @@ class ClassificadorMulticlasse:
                 AnnotateBars(n_dec=annot_ndec, color='black', font_size=annot_fontsize).vertical(ax)
 
         plt.tight_layout()
+
+        # Salvando figura
+        if 'save' in kwargs and bool(kwargs['save']):
+            output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
+            output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'metrics_comparison.png'
+            save_fig(g.fig, output_path=output_path, img_name=output_filename)   
     
     def custom_confusion_matrix(self, model_name, y_true, y_pred, classes, cmap, normalize=False):
         """
@@ -2220,7 +2479,7 @@ class ClassificadorMulticlasse:
                 
                 # Definindo classes para a plotagem
                 if classes is None:
-                    classes = list(range(y_train.shape[1]))
+                    classes = list(range(len(np.unique(y_train))))
                 
             except Exception as e:
                 logger.error(f'Erro ao retornar dados para o modelo {model_name}. Exception lançada: {e}')
@@ -2260,7 +2519,7 @@ class ClassificadorMulticlasse:
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'confusion_matrix.png'
-            self.save_fig(fig, output_path=output_path, img_name=output_filename)   
+            save_fig(fig, output_path=output_path, img_name=output_filename)   
    
     def plot_feature_importance(self, features, top_n=20, palette='viridis', **kwargs):
         """
@@ -2338,7 +2597,7 @@ class ClassificadorMulticlasse:
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'feature_importances.png'
-            self.save_fig(fig, output_path=output_path, img_name=output_filename)
+            save_fig(fig, output_path=output_path, img_name=output_filename)
     
     def plot_shap_analysis(self, model_name, features, n_classes, figsize=(16, 10), target_names=None,
                            **kwargs):
@@ -2416,8 +2675,90 @@ class ClassificadorMulticlasse:
             if 'save' in kwargs and bool(kwargs['save']):
                 output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
                 output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else f'shap_analysis_{model_name}.png'
-                self.save_fig(fig, output_path, img_name=output_filename)
+                save_fig(fig, output_path, img_name=output_filename)
     
+    def visual_analysis(self, features, metrics=True, df_metrics=None, feat_imp=True, cfmx=True, 
+                        model_shap=None, show=False, save=True, output_path=os.path.join(os.getcwd(), 'output/imgs'), 
+                        **kwargs):
+        """
+        Método responsável por consolidar análises gráficas no processo de modelagem
+
+        Parâmetros
+        ----------
+        :param features: lista de features do conjunto de dados [type: list]
+        :param metrics: flag inficativo da execução do método plot_metrics() [type: bool, default=True]
+        :param feat_imp: flag indicativo da execução da método plot_feature_importance() [type: bool, default=True]
+        :param cfmx: flag indicativo da execução da método plot_confusion_matrix() [type: bool, default=True]
+        :param roc: flag indicativo da execução da método plot_roc_curve() [type: bool, default=True]
+        :param score_dist: flag indicativo da execução da método plot_score_distribution() [type: bool, default=True]
+        :param score_bins: flag indicativo da execução da método plot_score_bins() [type: bool, default=True]
+        :param learn_curve: flag indicativo da execução da método plot_learning_curve() [type: bool, default=True]
+        :param model_shap: chave do modelo a ser utilizado na análise shap [type: string, default=None]
+        :param show: flag indicativo para mostragem das figuras em jupyter notebook [type: bool, default=False]
+        :param save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
+        :param output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']        
+
+        Retorno
+        -------
+        Este método não retorna nada além das imagens devidamente salvas no diretório destino
+
+        Aplicação
+        ---------
+        trainer = ClassificadorBinario()
+        trainer.fit(set_classifiers, X_train, y_train, X_test, y_test)        
+        """
+
+        # Verificando parâmetro para mostrar
+        backend_ = mpl.get_backend()
+        if not show:
+            mpl.use('Agg')
+
+        logger.debug(f'Inicializando análise gráfica nos modelos treinados')
+        target_names = kwargs['target_names'] if 'target_names' in kwargs else list(range(len(np.unique(y_train))))
+    
+        # Verificando plotagem das métricas
+        if metrics and df_metrics is None:
+            try:
+                X_train = kwargs['X_train']
+                y_train = kwargs['y_train']
+                X_val = kwargs['X_val']
+                y_val = kwargs['y_val']
+                y_val = kwargs['y_val']
+
+                # Calculando métricas
+                metrics = self.evaluate_performance(X_train, y_train, X_val, y_val, target_names=target_names)
+              
+            except Exception as e:
+                logger.error(f'Para a plotagem das métricas, é necessário fornecer ou a base de métricas ou X e y')
+            
+            self.plot_metrics(df_metrics=metrics, save=save, output_path=output_path)
+            
+        elif metrics and df_metrics is not None:
+            self.plot_metrics(df_metrics=metrics, save=save, output_path=output_path)
+             
+        # Verificando plotagem de feature importance
+        if feat_imp:
+            try:
+                self.plot_feature_importance(features=features, save=save, output_path=output_path)
+            except Exception as e:
+                logger.error(f'Erro ao plotar feature importances. Exception: {e}')
+
+        # Verificando plotagem de matriz de confusão
+        if cfmx:
+            try:
+                self.plot_confusion_matrix(classes=target_names, save=save, output_path=output_path)
+            except Exception as e:
+                logger.error(f'Erro ao plotar matriz de confusão. Exception: {e}')
+
+        if model_shap is not None:
+            try:
+                self.plot_shap_analysis(save=save, model_name=model_shap, features=features, output_path=output_path)
+            except Exception as e:
+                logger.error(f'Erro ao plotar análise shap. Exception: {e}')
+
+        # Resetando configurações
+        mpl.use(backend_)
+
     def get_estimator(self, model_name):
         """
         Método responsável por retornar o estimator de um modelo selecionado
