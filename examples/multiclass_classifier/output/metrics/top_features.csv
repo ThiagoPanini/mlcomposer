@@ -1,0 +1,9 @@
+model,feature,importance,anomesdia_datetime
+DecisionTreeClassifier,petal length (cm),0.9061433868879218,2021-04-17 16:41:08.833582
+DecisionTreeClassifier,petal width (cm),0.07718647349965893,2021-04-17 16:41:08.833582
+DecisionTreeClassifier,sepal width (cm),0.016670139612419255,2021-04-17 16:41:08.833582
+DecisionTreeClassifier,sepal length (cm),0.0,2021-04-17 16:41:08.833582
+RandomForestClassifier,petal length (cm),0.43999397414456937,2021-04-17 16:41:08.850772
+RandomForestClassifier,petal width (cm),0.4215215887397244,2021-04-17 16:41:08.850772
+RandomForestClassifier,sepal length (cm),0.10809762464246378,2021-04-17 16:41:08.850772
+RandomForestClassifier,sepal width (cm),0.030386812473242528,2021-04-17 16:41:08.850772
