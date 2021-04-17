@@ -7,9 +7,17 @@ aplicação relacionadas as funcionalidades presentes
 no módulo ml da biblioteca mlcomposer
 
 Sumário
------------------------------------
-
------------------------------------
+---------------------------------------------------
+1. Configuração inicial
+    1.1 Importando bibliotecas
+    1.2 Definição de variáveis do projeto
+2. Preparação da base de dados
+    2.1 Leitura das bases de treino e teste
+    2.2 Construindo pipelines de preparação
+    2.3 Aplicação dos pipelines de preparação
+3. Treinamento e avaliação de modelos
+    3.1 Estruturando objetos de modelagem
+---------------------------------------------------
 """
 
 # Autor: Thiago Panini
@@ -59,7 +67,7 @@ from ml.trainer import ClassificadorBinario
 load_dotenv(find_dotenv())
 
 # Definindo variáveis de diretório
-DATA_PATH = os.getenv('DATA_PATH')
+DATA_PATH = os.getenv('BIN_CLF_DATA_PATH')
 TRAIN_PATH = os.path.join(DATA_PATH, 'train.csv')
 TEST_PATH = os.path.join(DATA_PATH, 'test.csv')
 OUTPUT_PATH = os.path.join(os.getcwd(), os.path.dirname(__file__), 'output')
@@ -114,7 +122,7 @@ test = pd.read_csv(TEST_PATH)
 """
 ------------------------------------------------------
 ----------- 2. PREPARAÇÃO DA BASE DE DADOS -----------
-        2.3 Construindo pipelines de preparação
+        2.2 Construindo pipelines de preparação
 ------------------------------------------------------ 
 """
 
@@ -154,7 +162,7 @@ prep_pipeline = ColumnTransformer([
 """
 ------------------------------------------------------
 ----------- 2. PREPARAÇÃO DA BASE DE DADOS -----------
-      2.4 Aplicação dos pipelines de preparação
+      2.3 Aplicação dos pipelines de preparação
 ------------------------------------------------------ 
 """
 
@@ -187,7 +195,6 @@ svm = SVC(kernel='rbf', probability=True)
 model_obj = [svm, dtree, forest]
 model_names = [type(model).__name__ for model in model_obj]
 set_classifiers = {name: {'model': obj, 'params': {}} for (name, obj) in zip(model_names, model_obj)}
-#print(f'Classificadores a serem treinados: \n\n{model_names}')
 
 
 """
@@ -196,40 +203,6 @@ set_classifiers = {name: {'model': obj, 'params': {}} for (name, obj) in zip(mod
   3.2 Encapsulando etapa de treinamento e avaliação
 ------------------------------------------------------ 
 """
-
-"""# Criando objeto e realizando treinamento
-trainer = ClassificadorBinario()
-trainer.fit(set_classifiers, X_train_prep, y_train, random_search=False)
-
-# Resultados do treinamento (analítico)
-metrics = trainer.evaluate_performance(X_train_prep, y_train, X_val_prep, y_val, 
-                                       save=True, output_path=OUTPUT_PATH)
-
-# Resultados do treinamento (visual)
-trainer.plot_metrics(save=True, output_path=OUTPUT_PATH)
-
-# Análise das features mais importantes pra cada modelo
-trainer.plot_feature_importance(features=MODEL_FEATURES, save=True, output_path=OUTPUT_PATH)
-
-# Plotando matriz de confusão
-trainer.plot_confusion_matrix(save=True, output_path=OUTPUT_PATH)
-
-# Visualizando curva ROC
-trainer.plot_roc_curve(save=True, output_path=OUTPUT_PATH)
-
-# Visualizando distribuição de scores
-trainer.plot_score_distribution(save=True, output_path=OUTPUT_PATH)
-
-# Analisando score em faixas
-trainer.plot_score_bins(save=True, output_path=OUTPUT_PATH)
-
-# Analisando curva de aprendizado
-trainer.plot_learning_curve(save=True, output_path=OUTPUT_PATH)
-
-# Realizando análise shap
-trainer.plot_shap_analysis(model_name=MODEL_SHAP, features=MODEL_FEATURES, 
-                           save=True, output_path=OUTPUT_PATH)"""
-
 
 # Instanciando novo objeto
 trainer = ClassificadorBinario()
