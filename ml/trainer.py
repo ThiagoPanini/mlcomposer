@@ -3064,7 +3064,6 @@ def clf_cv_performance(model, X, y, cv=5, model_name=None):
     return df_performance
 
 
-
 """
 ---------------------------------------------------
 ------------- 3. REGRESSÃO LINEAR -----------------
@@ -3084,78 +3083,6 @@ class RegressorLinear:
         Método construtor inicializa dicionário de informações dos modelos treinados
         """
         self.regressors_info = {}
-        
-    def save_data(self, data, output_path, filename):
-        """
-        Método responsável por salvar objetos DataFrame em formato csv.
-
-        Parâmetros
-        ----------
-        :param data: arquivo/objeto a ser salvo [type: pd.DataFrame]
-        :param output_path: referência de diretório destino [type: string]
-        :param filename: referência do nome do arquivo a ser salvo [type: string]
-
-        Retorno
-        -------
-        Este método não retorna nenhum parâmetro além do arquivo devidamente salvo no diretório
-
-        Aplicação
-        ---------
-        df = file_generator_method()
-        self.save_result(df, output_path=OUTPUT_PATH, filename='arquivo.csv')
-        """
-
-        # Verificando se diretório existe
-        if not os.path.isdir(output_path):
-            logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
-            try:
-                os.makedirs(output_path)
-            except Exception as e:
-                logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
-                return
-
-        logger.debug(f'Salvando arquivo no diretório especificado')
-        try:
-            output_file = os.path.join(output_path, filename)
-            data.to_csv(output_file, index=False)
-        except Exception as e:
-            logger.error(f'Erro ao salvar arquivo {filename}. Exception lançada: {e}')
-            
-    def save_model(self, model, output_path, filename):
-        """
-        Método responsável por salvar modelos treinado em fomato pkl.
-
-        Parâmetros
-        ----------
-        :param model: objeto a ser salvo [type: model]
-        :param output_path: referência de diretório destino [type: string]
-        :param filename: referência do nome do modelo a ser salvo [type: string]
-
-        Retorno
-        -------
-        Este método não retorna nenhum parâmetro além do objeto devidamente salvo no diretório
-
-        Aplicação
-        ---------
-        model = classifiers['estimator']
-        self.save_model(model, output_path=OUTPUT_PATH, filename='model.pkl')
-        """
-
-        # Verificando se diretório existe
-        if not os.path.isdir(output_path):
-            logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
-            try:
-                os.makedirs(output_path)
-            except Exception as e:
-                logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
-                return
-
-        logger.debug(f'Salvando modelo pkl no diretório especificado')
-        try:
-            output_file = os.path.join(output_path, filename)
-            joblib.dump(model, output_file)
-        except Exception as e:
-            logger.error(f'Erro ao salvar modelo {filename}. Exception lançada: {e}')
         
     def fit(self, set_regressors, X_train, y_train, **kwargs):
         """
@@ -3302,9 +3229,9 @@ class RegressorLinear:
         except Exception as e:
             logger.error(f'Erro ao computar as métricas. Exception lançada: {e}')    
 
-    def compute_test_performance(self, model_name, estimator, X, y):
+    def compute_val_performance(self, model_name, estimator, X, y):
         """
-        Método responsável por aplicar retornar as principais métricas do modelo utilizando dados de teste.
+        Método responsável por aplicar retornar as principais métricas do modelo utilizando dados de validação.
         Na prática, esse método é chamado por um outro método em uma camada superior da classe para medição 
         de performance em treino e em teste
 
@@ -3312,8 +3239,8 @@ class RegressorLinear:
         ----------
         :param model_name: chave identificadora do modelo contida no atributo self.classifiers_info [type: string]
         :param estimator: estimator do modelo a ser avaliado [type: object]
-        :param X: conjunto de features do modelo contido nos dados de teste [type: np.array]
-        :param y: array contendo a variável resposta dos dados de teste do modelo [type: np.array]
+        :param X: conjunto de features do modelo contido nos dados de validação [type: np.array]
+        :param y: array contendo a variável resposta dos dados de validação do modelo [type: np.array]
 
         Retorno
         -------
@@ -3324,16 +3251,16 @@ class RegressorLinear:
         # Instanciando e treinando modelo
         trainer = ClassificadorBinario()
         trainer.fit(model, X_train, y_train)
-        test_performance = trainer.compute_test_performance(model_name, estimator, X_test, y_test)
+        test_performance = trainer.compute_val_performance(model_name, estimator, X_val, y_val)
         """
 
         # Predicting data using the trained model and computing probabilities
-        logger.debug(f'Computando métricas do modelo {model_name} utilizando dados de teste')
+        logger.debug(f'Computando métricas do modelo {model_name} utilizando dados de validação')
         try:
             t0 = time.time()
             y_pred = estimator.predict(X)
 
-            # Retrieving metrics using test data
+            # Retrieving metrics using validation data
             mae = mean_absolute_error(y, y_pred)
             mse = mean_squared_error(y, y_pred)
             rmse = np.sqrt(mse)
@@ -3344,20 +3271,20 @@ class RegressorLinear:
             delta_time = t1 - t0
             test_performance = {}
             test_performance['model'] = model_name
-            test_performance['approach'] = 'Teste'
+            test_performance['approach'] = 'Validation set'
             test_performance['mae'] = round(mae, 3)
             test_performance['mse'] = round(mse, 3)
             test_performance['rmse'] = round(rmse, 3)
             test_performance['r2'] = round(r2, 3)
             test_performance['total_time'] = round(delta_time, 3)
-            logger.info(f'Métricas computadas com sucesso nos dados de teste em {round(delta_time, 3)} segundos')
+            logger.info(f'Métricas computadas com sucesso nos dados de validação em {round(delta_time, 3)} segundos')
 
             return pd.DataFrame(test_performance, index=test_performance.keys()).reset_index(drop=True).loc[:0, :]
 
         except Exception as e:
             logger.error(f'Erro ao computar as métricas. Exception lançada: {e}')
 
-    def evaluate_performance(self, X_train, y_train, X_test, y_test, cv=5, **kwargs):
+    def evaluate_performance(self, X_train, y_train, X_val, y_val, cv=5, **kwargs):
         """
         Método responsável por executar e retornar métricas dos regressores em treino (média do resultado
         da validação cruzada com cv K-fols) e teste
@@ -3366,8 +3293,8 @@ class RegressorLinear:
         ----------
         :param X_train: conjunto de features do modelo contido nos dados de treino [type: np.array]
         :param y_train: array contendo a variável resposta dos dados de treino do modelo [type: np.array]
-        :param X_test: conjunto de features do modelo contido nos dados de teste [type: np.array]
-        :param y_test: array contendo a variável resposta dos dados de teste do modelo [type: np.array]
+        :param X_val: conjunto de features do modelo contido nos dados de validação [type: np.array]
+        :param y_val: array contendo a variável resposta dos dados de validação do modelo [type: np.array]
         :param cv: K-folds utiliados na validação cruzada [type: int, default: 5]
         :param **kwargs: argumentos adicionais do método
             :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
@@ -3385,7 +3312,7 @@ class RegressorLinear:
         trainer.fit(estimator, X_train, X_test)
 
         # Definindo dicionário de controle do resultado
-        df_performance = trainer.evaluate_performance(X_train, y_train, X_test, y_test, save=True, output_path=caminho)
+        df_performance = trainer.evaluate_performance(X_train, y_train, X_val, y_val, save=True, output_path=caminho)
         """
 
         # DataFrame vazio para armazenamento das métrics
@@ -3409,14 +3336,14 @@ class RegressorLinear:
 
             # Computando performance em treino e em teste
             train_performance = self.compute_train_performance(model_name, estimator, X_train, y_train, cv=cv)
-            test_performance = self.compute_test_performance(model_name, estimator, X_test, y_test)
+            val_performance = self.compute_val_performance(model_name, estimator, X_val, y_val)
 
             # Adicionando os resultados ao atributo classifiers_info
             self.regressors_info[model_name]['train_performance'] = train_performance
-            self.regressors_info[model_name]['test_performance'] = test_performance
+            self.regressors_info[model_name]['val_performance'] = val_performance
 
             # Construindo DataFrame com as métricas retornadas
-            model_performance = train_performance.append(test_performance)
+            model_performance = train_performance.append(val_performance)
             df_performances = df_performances.append(model_performance)
             df_performances['anomesdia_datetime'] = datetime.now()
 
@@ -3424,8 +3351,8 @@ class RegressorLinear:
             model_data = {
                 'X_train': X_train,
                 'y_train': y_train,
-                'X_test': X_test,
-                'y_test': y_test
+                'X_val': X_val,
+                'y_val': y_val
             }
             model_info['model_data'] = model_data
 
@@ -3433,7 +3360,7 @@ class RegressorLinear:
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/metrics')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'metrics.csv'
-            self.save_data(df_performances, output_path=output_path, filename=output_filename)
+            save_data(df_performances, output_path=output_path, filename=output_filename)
 
         return df_performances
     
@@ -3467,10 +3394,10 @@ class RegressorLinear:
             try:
                 importances = model_info['estimator'].feature_importances_
             except KeyError as ke:
-                logger.error(f'Modelo {model_name} não treinado, sendo impossível extrair o método feature_importances_')
+                logger.warning(f'Modelo {model_name} não treinado, sendo impossível extrair o método feature_importances_')
                 continue
             except AttributeError as ae:
-                logger.error(f'Modelo {model_name} não possui o método feature_importances_')
+                logger.warning(f'Modelo {model_name} não possui o método feature_importances_')
                 continue
 
             # Preparando o dataset para armazenamento das informações
@@ -3490,11 +3417,11 @@ class RegressorLinear:
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/metrics')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'top_features.csv'
-            self.save_data(all_feat_imp, output_path=output_path, filename=output_filename)
+            save_data(all_feat_imp, output_path=output_path, filename=output_filename)
         
         return all_feat_imp
     
-    def training_flow(self, set_regressors, X_train, y_train, X_test, y_test, features, **kwargs):
+    def training_flow(self, set_regressors, X_train, y_train, X_val, y_val, features, **kwargs):
         """
         Método responsável por consolidar um fluxo completo de treinamento dos regressores, bem como
         o levantamento de métricas e execução de métodos adicionais para escolha do melhor modelo
@@ -3562,7 +3489,7 @@ class RegressorLinear:
                  cv=cv, verbose=verbose, n_jobs=n_jobs, output_path=models_output_path)
 
         # Avaliando modelos
-        self.evaluate_performance(X_train, y_train, X_test, y_test, save=save, output_path=metrics_output_path, 
+        self.evaluate_performance(X_train, y_train, X_val, y_val, save=save, output_path=metrics_output_path, 
                                   output_filename=metrics_output_filename)
 
         # Analisando Features mais importantes
@@ -3645,7 +3572,7 @@ class RegressorLinear:
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'feature_importances.png'
-            self.save_fig(fig, output_path=output_path, img_name=output_filename)   
+            save_fig(fig, output_path=output_path, img_name=output_filename)   
     
     def plot_metrics(self, figsize=(16, 10), palette='rainbow', cv=5, **kwargs):
         """
@@ -3757,7 +3684,7 @@ class RegressorLinear:
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'metrics_comparison.png'
-            self.save_fig(fig, output_path=output_path, img_name=output_filename)      
+            save_fig(fig, output_path=output_path, img_name=output_filename)      
             
     def plot_learning_curve(self, ylim=None, cv=5, n_jobs=1, train_sizes=np.linspace(.1, 1.0, 10), **kwargs):
         """
@@ -3841,7 +3768,66 @@ class RegressorLinear:
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'learning_curve.png'
-            self.save_fig(fig, output_path=output_path, img_name=output_filename) 
+            save_fig(fig, output_path=output_path, img_name=output_filename) 
+
+    def visual_analysis(self, features, metrics=True, feat_imp=True, show=False, save=True, 
+                        learn_curve=True, output_path=os.path.join(os.getcwd(), 'output/imgs'), **kwargs):
+        """
+        Método responsável por consolidar análises gráficas no processo de modelagem
+
+        Parâmetros
+        ----------
+        :param features: lista de features do conjunto de dados [type: list]
+        :param metrics: flag inficativo da execução do método plot_metrics() [type: bool, default=True]
+        :param feat_imp: flag indicativo da execução da método plot_feature_importance() [type: bool, default=True]
+        :param cfmx: flag indicativo da execução da método plot_confusion_matrix() [type: bool, default=True]
+        :param roc: flag indicativo da execução da método plot_roc_curve() [type: bool, default=True]
+        :param score_dist: flag indicativo da execução da método plot_score_distribution() [type: bool, default=True]
+        :param score_bins: flag indicativo da execução da método plot_score_bins() [type: bool, default=True]
+        :param learn_curve: flag indicativo da execução da método plot_learning_curve() [type: bool, default=True]
+        :param model_shap: chave do modelo a ser utilizado na análise shap [type: string, default=None]
+        :param show: flag indicativo para mostragem das figuras em jupyter notebook [type: bool, default=False]
+        :param save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
+        :param output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']        
+
+        Retorno
+        -------
+        Este método não retorna nada além das imagens devidamente salvas no diretório destino
+
+        Aplicação
+        ---------
+        trainer = ClassificadorBinario()
+        trainer.fit(set_classifiers, X_train, y_train, X_test, y_test)        
+        """
+
+        # Verificando parâmetro para mostrar
+        backend_ = mpl.get_backend()
+        if not show:
+            mpl.use('Agg')
+
+        # Verificando plotagem das métricas
+        if metrics:
+            try:        
+                self.plot_metrics(save=save, output_path=output_path)
+            except Exception as e:
+                logger.error(f'Erro ao plotar métrics. Exception: {e}')
+             
+        # Verificando plotagem de feature importance
+        if feat_imp:
+            try:
+                self.plot_feature_importance(features=features, save=save, output_path=output_path)
+            except Exception as e:
+                logger.error(f'Erro ao plotar feature importances. Exception: {e}')
+
+        # Verificando plotagem de curva de aprendizado
+        if learn_curve:
+            try:
+                self.plot_learning_curve(save=save, output_path=output_path)
+            except Exception as e:
+                logger.error(f'Erro ao plotar curva de aprendizado. Exception: {e}')
+
+        # Resetando configurações
+        mpl.use(backend_)
 
     def get_estimator(self, model_name):
         """
