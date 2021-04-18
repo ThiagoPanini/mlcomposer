@@ -1,6 +1,6 @@
 """
 ---------------------------------------------------
-------- Exemplos de utilização - mlcomposer -------
+--- Exemplos de uso - Classificação Multiclasse ---
 ---------------------------------------------------
 Script responsável por consolidar exemplos de
 aplicação relacionadas as funcionalidades presentes
@@ -11,12 +11,9 @@ Sumário
 1. Configuração inicial
     1.1 Importando bibliotecas
     1.2 Definição de variáveis do projeto
-2. Preparação da base de dados
-    2.1 Leitura das bases de treino e teste
-    2.2 Construindo pipelines de preparação
-    2.3 Aplicação dos pipelines de preparação
-3. Treinamento e avaliação de modelos
-    3.1 Estruturando objetos de modelagem
+2. Treinamento e avaliação de modelos
+    2.1 Estruturando objetos de modelagem
+    2.2 Fluxos de treinamento e avaliação
 ---------------------------------------------------
 """
 
@@ -67,6 +64,7 @@ IMGS_OUTPUT_PATH = os.path.join(OUTPUT_PATH, 'imgs')
 # Definição de modelo para análise shap
 MODEL_SHAP = 'RandomForestClassifier'
 
+
 """
 ------------------------------------------------------
 ----------- 2. PREPARAÇÃO DA BASE DE DADOS -----------
@@ -89,8 +87,8 @@ MODEL_FEATURES = iris['feature_names']
 
 """
 ------------------------------------------------------
-------- 3. TREINAMENTO E AVALIAÇÃO DE MODELOS --------
-        3.1 Estruturando objetos de modelagem
+------- 2. TREINAMENTO E AVALIAÇÃO DE MODELOS --------
+        2.1 Estruturando objetos de modelagem
 ------------------------------------------------------ 
 """
 
@@ -107,8 +105,8 @@ set_classifiers = {name: {'model': obj, 'params': {}} for (name, obj) in zip(mod
 
 """
 ------------------------------------------------------
-------- 3. TREINAMENTO E AVALIAÇÃO DE MODELOS --------
-  3.2 Encapsulando etapa de treinamento e avaliação
+------- 2. TREINAMENTO E AVALIAÇÃO DE MODELOS --------
+        2.2 Fluxos de treinamento e avaliação
 ------------------------------------------------------ 
 """
 
@@ -123,6 +121,3 @@ trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, target_na
 # Gerando e salvando gráficos de análises visuais
 trainer.visual_analysis(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, features=MODEL_FEATURES, 
                         target_names=TARGET_NAMES, output_path=IMGS_OUTPUT_PATH)
-
-"""trainer.fit(set_classifiers, X_train, y_train)
-metrics = trainer.evaluate_performance(X_train, y_train, X_val, y_val, target_names=TARGET_NAMES)"""
