@@ -1,0 +1,11 @@
+model,approach,mae,mse,rmse,r2,total_time,anomesdia_datetime
+LinearRegression,Treino 5 K-folds,0.096,0.043,0.188,0.713,1.513,2021-04-18 18:04:09.947695
+LinearRegression,Validation set,0.092,0.019,0.139,0.896,0.008,2021-04-18 18:04:09.947695
+DecisionTreeRegressor,Treino 5 K-folds,0.152,0.047,0.216,0.686,0.517,2021-04-18 18:04:09.947695
+DecisionTreeRegressor,Validation set,0.147,0.042,0.206,0.773,0.001,2021-04-18 18:04:09.947695
+Lasso,Treino 5 K-folds,0.189,0.065,0.254,0.572,0.184,2021-04-18 18:04:09.947695
+Lasso,Validation set,0.201,0.08,0.283,0.569,0.001,2021-04-18 18:04:09.947695
+Ridge,Treino 5 K-folds,0.091,0.02,0.14,0.871,0.36,2021-04-18 18:04:09.947695
+Ridge,Validation set,0.094,0.019,0.138,0.898,0.011,2021-04-18 18:04:09.947695
+ElasticNet,Treino 5 K-folds,0.184,0.062,0.248,0.592,0.296,2021-04-18 18:04:09.947695
+ElasticNet,Validation set,0.194,0.074,0.272,0.604,0.012,2021-04-18 18:04:09.947695
