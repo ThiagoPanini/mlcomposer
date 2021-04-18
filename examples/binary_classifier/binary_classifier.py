@@ -1,6 +1,6 @@
 """
 ---------------------------------------------------
-------- Exemplos de utilização - mlcomposer -------
+----- Exemplos de uso - Classificação Binária -----
 ---------------------------------------------------
 Script responsável por consolidar exemplos de
 aplicação relacionadas as funcionalidades presentes
@@ -17,6 +17,7 @@ Sumário
     2.3 Aplicação dos pipelines de preparação
 3. Treinamento e avaliação de modelos
     3.1 Estruturando objetos de modelagem
+    3.2 Fluxos de treinamento e avaliação
 ---------------------------------------------------
 """
 
@@ -200,7 +201,7 @@ set_classifiers = {name: {'model': obj, 'params': {}} for (name, obj) in zip(mod
 """
 ------------------------------------------------------
 ------- 3. TREINAMENTO E AVALIAÇÃO DE MODELOS --------
-  3.2 Encapsulando etapa de treinamento e avaliação
+        3.2 Fluxos de treinamento e avaliação
 ------------------------------------------------------ 
 """
 
