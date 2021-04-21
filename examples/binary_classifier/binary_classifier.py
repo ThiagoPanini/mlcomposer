@@ -45,16 +45,15 @@ from dotenv import load_dotenv, find_dotenv
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from ml.transformers import FiltraColunas, ModificaTipoPrimitivo, \
-    EliminaDuplicatas, DynamicLogTransformation, DynamicScaler, \
-        DummiesEncoding
+from mlcomposer.transformers import FiltraColunas, ModificaTipoPrimitivo, \
+    EliminaDuplicatas, DynamicLogTransformation, DynamicScaler, DummiesEncoding
 
 # Modelagem dos dados
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from ml.trainer import ClassificadorBinario
+from mlcomposer.trainer import ClassificadorBinario
 
 
 """
