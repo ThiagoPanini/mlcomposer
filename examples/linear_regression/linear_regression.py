@@ -46,7 +46,7 @@ from dotenv import load_dotenv, find_dotenv
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from ml.transformers import FiltraColunas, ModificaTipoPrimitivo, \
+from mlcomposer.transformers import FiltraColunas, ModificaTipoPrimitivo, \
     EliminaDuplicatas, DynamicLogTransformation, DynamicScaler, \
     DummiesEncoding, AgrupamentoCategoricoFinal, LogTransformation
 
@@ -55,7 +55,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
-from ml.trainer import RegressorLinear
+from mlcomposer.trainer import RegressorLinear
 
 
 """
