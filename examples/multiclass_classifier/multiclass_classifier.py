@@ -45,7 +45,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from ml.trainer import ClassificadorMulticlasse
+from mlcomposer.trainer import ClassificadorMulticlasse
 
 
 """
