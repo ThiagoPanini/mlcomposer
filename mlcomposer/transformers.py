@@ -483,7 +483,7 @@ class DropNullData(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        # Dropando nulos
+        # Dropping null data
         if self.cols_dropna is not None:
             X[self.cols_dropna] = X[self.cols_dropna].dropna()
             return X
