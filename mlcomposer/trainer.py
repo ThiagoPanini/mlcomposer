@@ -1,24 +1,29 @@
 """
 ---------------------------------------------------
--------------- MODULE: Transformers ---------------
+----------------- MODULE: Trainer -----------------
 ---------------------------------------------------
-This useful module allocates custom classes built 
-for making the whole data preparation pipeline 
-easier for the user. With transformations wrote
-as python classes with BaseEstimator and 
-TransformerMixin from sklearn package, the objects
-inherits the fit_transform() method that can be
-applied on complete data preparation pipelines
-from easiest to hardest.
+This must-use module has excellent classes and
+methods for complete training and evaluating 
+Machine Learning models with just few lines of code.
+It really encapsulates almost all the hard work of
+data scientists and data analysts by presenting
+classes with methods for training, optimizing
+models hyperparemeters, generating performance
+reports, plotting feature importances, confusion
+matrix, roc curves and much more!
 
 Table of Contents
 ---------------------------------------------------
 1. Initial setup
     1.1 Importing libraries
-2. Custom Transformers
-    2.1 Initial pipelines
-    2.2 Data preparation pipelines
-    2.3 Pipelines for model consuption
+    1.2 Setting up logging
+    1.3 Functions for formatting charts
+    1.4 Functions for saving objects
+2. Classification
+    2.1 Binary classification
+    2.2 Multiclass classification
+3. Regression
+    2.1 Linear regression
 ---------------------------------------------------
 """
 
@@ -28,12 +33,12 @@ Table of Contents
 
 """
 ---------------------------------------------------
------------- 1. CONFIGURAÇÃO INICIAL --------------
-           1.1 Importando bibliotecas
+---------------- 1. INITIAL SETUP -----------------
+             1.1 Importing libraries
 ---------------------------------------------------
 """
 
-# Bibliotecas padrão
+# Standard libraries
 import pandas as pd
 import numpy as np
 import time
@@ -44,7 +49,7 @@ import os
 from os import makedirs, getcwd
 from os.path import isdir, join
 
-# Modelagem 
+# Machine Learning 
 import joblib
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import cross_val_score, cross_val_predict, learning_curve
@@ -55,14 +60,14 @@ from sklearn.metrics import classification_report
 from sklearn.exceptions import NotFittedError
 import shap
 
-# Visualização
+# Viz
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib.patches import Patch
 from matplotlib.axes import Axes
 import seaborn as sns
 
-# AnnotateBars class (referência na classe)
+# For AnnotateBars class
 from dataclasses import dataclass
 from typing import *
 
@@ -72,31 +77,32 @@ import logging
 
 """
 ---------------------------------------------------
------------- 1. CONFIGURAÇÃO INICIAL --------------
-           1.2 Definindo objetos de log
+---------------- 1. INITIAL SETUP -----------------
+              1.2 Setting up logging
 ---------------------------------------------------
 """
 
+# Function for a useful log configuration
 def log_config(logger, level=logging.DEBUG, 
                log_format='%(levelname)s;%(asctime)s;%(filename)s;%(module)s;%(lineno)d;%(message)s',
                log_filepath=os.path.join(os.getcwd(), 'exec_log/execution_log.log'),
                flag_file_handler=False, flag_stream_handler=True, filemode='a'):
     """
-    Função que recebe um objeto logging e aplica configurações básicas ao mesmo
+    Uses a logging object for applying basic configuration on it
 
-    Parâmetros
+    Parameters
     ----------
-    :param logger: objeto logger criado no escopo do módulo [type: logging.getLogger()]
-    :param level: level do objeto logger criado [type: level, default: logging.DEBUG]
-    :param log_format: formato do log a ser armazenado [type: string]
-    :param log_filepath: caminho onde o arquivo .log será armazenado [type: string, default: 'log/application_log.log']
-    :param flag_file_handler: flag para salvamento de arquivo .log [type: bool, default=False]
-    :param flag_stream_handler: flag para verbosity do log no cmd [type: bool, default=True]
-    :param filemode: tipo de escrita no arquivo de log [type: string, default: 'a' (append)]
+    :param logger: logger object created on module scope [type: logging.getLogger()]
+    :param level: logger object level [type: level, default=logging.DEBUG]
+    :param log_format: logger format to be stored [type: string]
+    :param log_filepath: path where .log file will be stored [type: string, default='log/application_log.log']
+    :param flag_file_handler: flag for saving .log file [type: bool, default=False]
+    :param flag_stream_handler: flag for log verbosity on cmd [type: bool, default=True]
+    :param filemode: write type on the log file [type: string, default='a' (append)]
 
-    Retorno
-    -------
-    :return logger: objeto logger pré-configurado
+    Return
+    ------
+    :return logger: pre-configured logger object
     """
 
     # Setting level for the logger object
@@ -111,58 +117,57 @@ def log_config(logger, level=logging.DEBUG,
         if not isdir(log_path):
             makedirs(log_path)
 
-        # Adicionando file_handler
+        # Adding file_handler
         file_handler = logging.FileHandler(log_filepath, mode=filemode, encoding='utf-8')
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
     if flag_stream_handler:
-        # Adicionando stream_handler
+        # Adding stream_handler
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)    
         logger.addHandler(stream_handler)
 
     return logger
 
-
-# Configurando objeto de log
+# Setting up logger object
 logger = logging.getLogger(__file__)
 logger = log_config(logger)
 
 
 """
 ---------------------------------------------------
------------- 1. CONFIGURAÇÃO INICIAL --------------
-   1.2 Eixos de plotagem e formatação de rótulos
+---------------- 1. INITIAL SETUP -----------------
+        1.3 Functions for formatting charts
 ---------------------------------------------------
 """
 
-# Formatando eixos do matplotlib
-def format_spines(ax, right_border=True):
+# Formatting spines in a matplotlib plot
+def format_spines(ax, right_border=False):
     """
-    Função responsável por modificar as bordas e cores de eixos do matplotlib
+    Modify borders and axis colors of matplotlib figures
 
-    Parâmetros
+    Parameters
     ----------
-    :param ax: eixo do gráfico criado no matplotlib [type: matplotlib.pyplot.axes]
-    :param right_border: flag para plotagem ou ocultação da borda direita [type: bool, default=True]
+    :param ax: figura axis created using matplotlib [type: matplotlib.pyplot.axes]
+    :param right_border: boolean flag for hiding right border [type: bool, default=False]
 
-    Retorno
+    Return
+    ------
+    This functions has no return besides the customization of matplotlib axis
+
+    Example
     -------
-    Esta função não retorna nenhum parâmetro além do eixo devidamente customizado
-
-    Aplicação
-    ---------
     fig, ax = plt.subplots()
     format_spines(ax=ax, right_border=False)
     """
 
-    # Definindo cores dos eixos
+    # Setting colors on the axis
     ax.spines['bottom'].set_color('#CCCCCC')
     ax.spines['left'].set_color('#CCCCCC')
     ax.spines['top'].set_visible(False)
 
-    # Validando plotagem da borda direita
+    # Right border formatting
     if right_border:
         ax.spines['right'].set_color('#CCCCCC')
     else:
@@ -170,8 +175,8 @@ def format_spines(ax, right_border=True):
     ax.patch.set_facecolor('#FFFFFF')
 
 
-# Referência: https://towardsdatascience.com/annotating-bar-charts-and-other-matplolib-techniques-cecb54315015
-# Criando allias
+# Reference: https://towardsdatascience.com/annotating-bar-charts-and-other-matplolib-techniques-cecb54315015
+# Creating allias
 #Patch = matplotlib.patches.Patch
 PosVal = Tuple[float, Tuple[float, float]]
 #Axis = matplotlib.axes.Axes
@@ -212,157 +217,137 @@ class AnnotateBars:
             ax.annotate(f"{value:.{self.n_dec}f}", pos, **cfg)
 
 
-# Definindo funções úteis para plotagem dos rótulos no gráfico
-def make_autopct(values):
-    """
-    Função para configuração de rótulos em gráficos de rosca
-
-    Parâmetros
-    ----------
-    :param values: valores atrelados ao rótulo [type: np.array]
-
-    Retorno
-    -------
-    :return my_autopct: string formatada para plotagem dos rótulos
-    """
-
-    def my_autopct(pct):
-        total = sum(values)
-        val = int(round(pct * total / 100.0))
-
-        return '{p:.1f}%\n({v:d})'.format(p=pct, v=val)
-
-    return my_autopct
-
-
 """
 ---------------------------------------------------
------------- 1. CONFIGURAÇÃO INICIAL --------------
-  1.3 Funções estáticas para salvamento de objetos
+---------------- 1. INITIAL SETUP -----------------
+         1.3 Functions for saving objects
 ---------------------------------------------------
 """
 
-# Função responsável por salvar arquivos csv
+# Saving DataFrames on csv format
 def save_data(data, output_path, filename):
     """
     Método responsável por salvar objetos DataFrame em formato csv.
 
-    Parâmetros
+    Parameters
     ----------
-    :param data: arquivo/objeto a ser salvo [type: pd.DataFrame]
-    :param output_path: referência de diretório destino [type: string]
-    :param filename: referência do nome do arquivo a ser salvo [type: string]
+    :param data: data to be saved [type: pd.DataFrame]
+    :param output_path: path reference for the file [type: string]
+    :param filename: filename for the file with .csv extension [type: string]
 
-    Retorno
-    -------
-    Este método não retorna nenhum parâmetro além do arquivo devidamente salvo no diretório
+    Return
+    ------
+    There is no return besides the file saved on local machine
 
-    Aplicação
-    ---------
+    Application
+    -----------
     df = file_generator_method()
     save_result(df, output_path=OUTPUT_PATH, filename='arquivo.csv')
     """
 
-    # Verificando se diretório existe
+    # Searching if directory exists
     if not os.path.isdir(output_path):
-        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
+        logger.warning(f'Path {output_path} not exists. Creating directory on the path')
         try:
             os.makedirs(output_path)
         except Exception as e:
-            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
+            logger.error(f'Error on training to create directory {output_path}. Exception: {e}')
             return
 
-    logger.debug(f'Salvando arquivo no diretório especificado')
+    logger.debug(f'Saving file on directory')
     try:
         output_file = os.path.join(output_path, filename)
         data.to_csv(output_file, index=False)
     except Exception as e:
-        logger.error(f'Erro ao salvar arquivo {filename}. Exception lançada: {e}')
+        logger.error(f'Error on saving file {filename}. Exception: {e}')
 
-# Função responsável por salvar modelos em formato pkl
+# Saving model in pkl format
 def save_model(model, output_path, filename):
     """
-    Método responsável por salvar modelos treinado em fomato pkl.
+    Saves trained model and pipelines on pkl format
 
-    Parâmetros
-    ----------
-    :param model: objeto a ser salvo [type: model]
-    :param output_path: referência de diretório destino [type: string]
-    :param filename: referência do nome do modelo a ser salvo [type: string]
-
-    Retorno
-    -------
-    Este método não retorna nenhum parâmetro além do objeto devidamente salvo no diretório
-
-    Aplicação
+    Parameter
     ---------
+    :param model: model object to be saved [type: model]
+    :param output_path: path reference for the file [type: string]
+    :param filename: filename for the file with .csv extension [type: string]
+
+    Return
+    ------
+    There is no return besides the object saved on local machine
+
+    Application
+    -----------
     model = classifiers['estimator']
     save_model(model, output_path=OUTPUT_PATH, filename='model.pkl')
     """
 
-    # Verificando se diretório existe
+    # Searching if directory exists
     if not os.path.isdir(output_path):
-        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
+        logger.warning(f'Path {output_path} not exists. Creating directory on the path')
         try:
             os.makedirs(output_path)
         except Exception as e:
-            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
+            logger.error(f'Error on training to create directory {output_path}. Exception: {e}')
             return
 
-    logger.debug(f'Salvando modelo pkl no diretório especificado')
+    logger.debug(f'Saving pkl file on directory')
     try:
         output_file = os.path.join(output_path, filename)
         joblib.dump(model, output_file)
     except Exception as e:
-        logger.error(f'Erro ao salvar modelo {filename}. Exception lançada: {e}')
+        logger.error(f'Error on saving model {filename}. Exception: {e}')
 
-# Função responsável por salvar imagens em formato png
+# Saving figures generated from matplotlib
 def save_fig(fig, output_path, img_name, tight_layout=True, dpi=300):
     """
-    Método responsável por salvar imagens geradas pelo matplotlib/seaborn
+    Saves figures created from matplotlib/seaborn
 
-    Parâmetros
+    Parameters
     ----------
-    :param fig: figura criada pelo matplotlib para a plotagem gráfica [type: plt.figure]
-    :param output_file: caminho final a ser salvo (+ nome do arquivo em formato png) [type: string]
-    :param tight_layout: flag que define o acerto da imagem [type: bool, default=True]
-    :param dpi: resolução da imagem a ser salva [type: int, default=300]
+    :param fig: figure created using matplotlib [type: plt.figure]
+    :param output_file: path for image to be saved (path + filename in png format) [type: string]
+    :param tight_layout: flag for tighting figure layout before saving it [type: bool, default=True]
+    :param dpi: image resolution [type: int, default=300]
 
-    Retorno
-    -------
-    Este método não retorna nenhum parâmetro além do salvamento da imagem em diretório especificado
+    Return
+    ------
+    This function returns nothing besides the image saved on the given path
 
-    Aplicação
+    Application
     ---------
     fig, ax = plt.subplots()
-    save_fig(fig, output_file='imagem.png')
+    save_fig(fig, output_file='image.png')
     """
 
-    # Verificando se diretório existe
+    # Searching for the existance of the directory
     if not os.path.isdir(output_path):
-        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
+        logger.warning(f'Directory {output_path} not exists. Creating a directory on the given path')
         try:
             os.makedirs(output_path)
         except Exception as e:
-            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
+            logger.error(f'Error on creating the directory {output_path}. Exception: {e}')
+            return
     
-    # Acertando layout da imagem
+    # Tighting layout
     if tight_layout:
         fig.tight_layout()
     
-    logger.debug('Salvando imagem no diretório especificado')
+    logger.debug('Saving image on directory')
     try:
         output_file = os.path.join(output_path, img_name)
         fig.savefig(output_file, dpi=300)
-        logger.info(f'Imagem salva com sucesso em {output_file}')
+        logger.info(f'Image succesfully saved in {output_file}')
     except Exception as e:
-        logger.error(f'Erro ao salvar imagem. Exception lançada: {e}')
+        logger.error(f'Error on saving image. Exception: {e}')
+        return
+
 
 
 """
 ---------------------------------------------------
---------------- 2. CLASSIFICAÇÃO ------------------
-           2.1 Classificador Binário
+---------------- 2. CLASSIFICATION ----------------
+             2.1 Binary Classification
 ---------------------------------------------------
 """
 
@@ -1737,8 +1722,8 @@ class ClassificadorBinario:
 
 """
 ---------------------------------------------------
---------------- 2. CLASSIFICAÇÃO ------------------
-         2.1 Classificador Multiclasse
+---------------- 2. CLASSIFICATION ----------------
+           2.2 Multiclass Classification
 ---------------------------------------------------
 """
 
@@ -2768,203 +2753,11 @@ class ClassificadorMulticlasse:
         return self.classifiers_info
 
 
-"""
----------------------------------------------------
---------------- 2. CLASSIFICAÇÃO ------------------
-       2.2. Funções de Análise de Modelos
----------------------------------------------------
-"""
-
-def save_fig(fig, output_path, img_name, tight_layout=True, dpi=300):
-    """
-    Função responsável por salvar imagens geradas pelo matplotlib/seaborn
-
-    Parâmetros
-    ----------
-    :param fig: figura criada pelo matplotlib para a plotagem gráfica [type: plt.figure]
-    :param output_file: caminho final a ser salvo (+ nome do arquivo em formato png) [type: string]
-    :param tight_layout: flag que define o acerto da imagem [type: bool, default=True]
-    :param dpi: resolução da imagem a ser salva [type: int, default=300]
-
-    Retorno
-    -------
-    Este método não retorna nenhum parâmetro além do salvamento da imagem em diretório especificado
-
-    Aplicação
-    ---------
-    fig, ax = plt.subplots()
-    save_fig(fig, output_path='output/imgs', img_name='imagem.png')
-    """
-
-    # Verificando se diretório existe
-    if not os.path.isdir(output_path):
-        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
-        try:
-            os.makedirs(output_path)
-        except Exception as e:
-            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
-
-    # Acertando layout da imagem
-    if tight_layout:
-        fig.tight_layout()
-
-    logger.debug('Salvando imagem no diretório especificado')
-    try:
-        output_file = os.path.join(output_path, img_name)
-        fig.savefig(output_file, dpi=300)
-        logger.info(f'Imagem salva com sucesso em {output_file}')
-    except Exception as e:
-        logger.error(f'Erro ao salvar imagem. Exception lançada: {e}')
-
-def clf_plot_feature_score_dist(data, feature, model, figsize=(16, 8), kind='boxplot', bin_range=.20, palette='magma',
-                            save=True, output_path='output/imgs', img_name='feature_score_dist.png'):
-    """
-    Função responsável por plotar a distribuição de uma determinada variável do dataset em 
-    faixas de score obtidas através das probabilidades de um modelo preditivo
-    
-    Parâmetros
-    ----------
-    :param data: base de dados a ser analisada [type: pd.DataFrame]
-    :param feature: referência da coluna a ser analisada [type: string]
-    :param model: modelo preditivo já treinado [type: estimator]
-    :param figsize: dimensões da figura de plotagem [type: tuple, default=(16, 10)]
-    :param kind: tipo de gráfico a ser plotado [type: string, default='boxplot']
-        *opções: 'boxplot', 'boxenplot', 'stripplot', 'kdeplot'
-    :param bin_range: separador das faixas de score do modelo [type: float, default=.20]
-    :param palette: colormap utilizado na plotagem gráfica [type: string, default='magma']
-    :param save: flag para indicar o salvamento da imagem gerada [type: bool, default=True]
-    :param output_path: diretório de salvamento da imagem gerada [type: string, default='output/imgs']
-    :param img_name: nome do arquivo a ser salvo [type: string, default='feature_model_score_dist.png']
-        
-    Retorno
-    -------
-    Essa função não retorna nenhum parâmetro além da figura plotada utilizando o método boxplot do seaborn
-    
-    Aplicação
-    ---------
-    # Treinando modelo preditivo
-    model = RandomForestClassifier()
-    model.fit(X_train_prep, y_train)
-    
-    # Analisando distribuição de uma variável
-    plot_feature_score_proba(X_train_prep, feature='numerical_col', model=model)
-    """
-    
-    model_name = type(model).__name__
-    logger.debug(f'Retornando probabilidades do modelo {model_name}')
-    df = data.copy()
-    try:
-        y_scores = model.predict_proba(df)[:, 1]
-    except NotFittedError as nfe:
-        logger.error(f'Modelo {model_name} não foi treinado, impossibilitando o retorno das probabilidades. Exception: {nfe}')
-        return
-    
-    logger.debug('Criando faixas com as probabilidades obtidas')
-    try:
-        bins = np.arange(0, 1.01, bin_range)
-        bins_labels = [str(round(list(bins)[i - 1], 2)) + ' a ' + str(round(list(bins)[i], 2)) for i in range(len(bins)) if i > 0]
-        df['faixa'] = pd.cut(y_scores, bins, labels=bins_labels)
-    except Exception as e:
-        logger.error(f'Erro ao criar as faixas do modelo. Exception lançada: {e}')
-        return
-    
-    logger.debug(f'Plotando análise de distribuição {kind} para a variável {feature}')
-    try:
-        fig, ax = plt.subplots(figsize=figsize)
-        
-        # Validando tipo de plotagem
-        if kind == 'boxplot':
-            sns.boxplot(x='faixa', y=feature, data=df, palette=palette)
-        elif kind == 'boxenplot':
-            sns.boxenplot(x='faixa', y=feature, data=df, palette=palette)
-        elif kind == 'stripplot':
-            sns.stripplot(x='faixa', y=feature, data=df, palette=palette)
-        elif kind == 'kdeplot':
-            # Plotando um gráfico de distribuição pra cada categoria
-            for label in bins_labels:
-                sns.kdeplot(df[df['faixa']==label][feature], ax=ax, label=label, shade=True)
-                plt.legend()
-        else:
-            logger.warning(f'Tipo de plotagem {kind} não disponível. Selecione entre ["boxplot", "boxenplot", "stripplot"]')
-            return
-        
-        ax.set_title(f'Gráfico ${kind}$ de ${feature}$ nas faixas de score do modelo ${model_name}$', size=14)
-        format_spines(ax, right_border=False)
-    except Exception as e:
-        logger.error(f'Erro ao plotar o gráfico para a variável {feature}. Exception: {e}')
-        return
-    
-    # Validando salvamento da figura
-    if save:
-        save_fig(fig=fig, output_path=output_path, img_name=img_name)
-
-def clf_cv_performance(model, X, y, cv=5, model_name=None):
-    """
-    Função responsável por calcular as principais métricas de um modelo de classificação
-    utilizando validação cruzada
-    
-    Parâmetros
-    ----------
-    :param model: estimator do modelo preditivo [type: estimator]
-    :param X: dados de entrada do modelo [type: np.array]
-    :param y: array de target do modelo [type: np.array]
-    :param cv: número de k-folds utilizado na validação cruzada [type: int, default=5]
-        
-    Retorno
-    -------
-    :return df_performance: DataFrame contendo as principais métricas de classificação [type: pd.DataFrame]
-    
-    Aplicação
-    ---------
-    results = clf_cv_performance(model=model, X=X, y=y)
-    """
-
-    # Computing metrics using cross validation
-    t0 = time.time()
-    accuracy = cross_val_score(model, X, y, cv=cv, scoring='accuracy').mean()
-    precision = cross_val_score(model, X, y, cv=cv, scoring='precision').mean()
-    recall = cross_val_score(model, X, y, cv=cv, scoring='recall').mean()
-    f1 = cross_val_score(model, X, y, cv=cv, scoring='f1').mean()
-
-    # Probas for calculating AUC
-    try:
-        y_scores = cross_val_predict(model, X, y, cv=cv, method='decision_function')
-    except:
-        # Tree based models don't have 'decision_function()' method, but 'predict_proba()'
-        y_probas = cross_val_predict(model, X, y, cv=cv, method='predict_proba')
-        y_scores = y_probas[:, 1]
-    auc = roc_auc_score(y, y_scores)
-
-    # Creating a DataFrame with metrics
-    t1 = time.time()
-    delta_time = t1 - t0
-    train_performance = {}
-    if model_name is None:
-        train_performance['model'] = model.__class__.__name__
-    else:
-        train_performance['model'] = model_name
-    train_performance['approach'] = 'Final Model'
-    train_performance['acc'] = round(accuracy, 4)
-    train_performance['precision'] = round(precision, 4)
-    train_performance['recall'] = round(recall, 4)
-    train_performance['f1'] = round(f1, 4)
-    train_performance['auc'] = round(auc, 4)
-    train_performance['total_time'] = round(delta_time, 3)
-    df_performance = pd.DataFrame(train_performance, index=train_performance.keys()).reset_index(drop=True).loc[:0, :]
-
-    # Adding information of measuring and execution time
-    cols_performance = list(df_performance.columns)
-    df_performance['anomesdia'] = datetime.now().strftime('%Y%m%d')
-    df_performance['anomesdia_datetime'] = datetime.now()
-    df_performance = df_performance.loc[:, ['anomesdia', 'anomesdia_datetime'] + cols_performance]
-
-    return df_performance
-
 
 """
 ---------------------------------------------------
-------------- 3. REGRESSÃO LINEAR -----------------
-          3.1 Treinamento e Avaliação
+------------------ 3. REGRESSION ----------------
+              1.1 Linear Regression
 ---------------------------------------------------
 """
 
