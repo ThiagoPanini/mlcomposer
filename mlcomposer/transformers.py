@@ -490,23 +490,24 @@ class DropNullData(BaseEstimator, TransformerMixin):
         else:
             return X.dropna()
 
-
-class SeletorTopFeatures(BaseEstimator, TransformerMixin):
+# Selecting top features based on a importance rule
+class FeatureSelection(BaseEstimator, TransformerMixin):
     """
-    Classe responsável por selecionar as top k features mais importantes de um modelo treinado
+    Selects the top k features based on a sorted list. This class can be used to select
+    the most important features returned for a trained model
 
-    Parâmetros
+    Parameters
     ----------
-    :param feature_importance: array com a importâncias das features retornado de um modelo treinado [np.array]
-    :param k: define as top k features a serem filtradas do array [type: int]
+    :param feature_importance: feature importance array or a sorted list [np.array]
+    :param k: used to select the top k features from the array [type: int]
 
-    Retorno
-    -------
-    :return: DataFrame filtrado pelas top k features mais importantes [pd.DataFrame]
+    Return
+    ------
+    :return: DataFrame filtered by top k features [pd.DataFrame]
 
-    Aplicação
-    ---------
-    feature_selector = SeletorTopFeatures(feature_importance, k=10)
+    Application
+    -----------
+    feature_selector = FeatureSelection(feature_importance, k=10)
     X_selected = feature_selector.fit_transform(X)
     """
 
@@ -518,21 +519,22 @@ class SeletorTopFeatures(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
+        # Extract indexes for the top k features and selects the DataFrame
         indices = np.sort(np.argpartition(np.array(self.feature_importance), -self.k)[-self.k:])
         return X[:, indices]
 
-
+# Applying logarithm transformation on features
 class LogTransformation(BaseEstimator, TransformerMixin):
     """
-    Classe responsável por aplicar uma transformação logaritma em dados numéricos
+    Applies log transformation on numerical features
 
-    Parâmetros
+    Parameters
     ----------
-    :param cols_to_log: colunas alvo da aplicação da transformação [type: list]
+    :param cols_to_log: list of columns to be transformed [type: list]
 
-    Retorno
-    -------
-    :return np.log1p(X): DataFrame após transformação [type: pd.DataFrame]
+    Return
+    ------
+    :return np.log1p(X): DataFrame after log application [type: pd.DataFrame]
 
     Application
     -----------
@@ -547,7 +549,7 @@ class LogTransformation(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        # Aplicando transformação
+        # Applying transformation in just some columns
         if self.cols_to_log is not None:
             if type(X) is DataFrame:
                 X[self.cols_to_log] = np.log1p(X[self.cols_to_log])
@@ -555,23 +557,25 @@ class LogTransformation(BaseEstimator, TransformerMixin):
             elif type(X) is ndarray:
                 X[:, self.cols_to_log] = np.log1p(X[:, self.cols_to_log])
                 return X
+        # Applying tranformation on all columns
         else:
             return np.log1p(X)
 
-
+# Applying logarithm transformation with a selection flag that can be tunned
 class DynamicLogTransformation(BaseEstimator, TransformerMixin):
     """
-    Classe responsável por aplicar uma transformação logaritma em dados numéricos
+    Applies log transformation on numerical features. This class has an "application"
+    boolean flag that guides the log transformation and it can be tunned on pipelines
 
-    Parâmetros
+    Parameters
     ----------
-    :param num_features: lista de features numéricas da base de input [type: list]
-    :param cols_to_log: colunas alvo da aplicação da transformação [type: list]
-    :param application: flag para guiar a aplicação da transformação [type: bool]
+    :param num_features: numerical features list [type: list]
+    :param cols_to_log: list of columns to be transformed [type: list]
+    :param application: flag for applying or not the class transform method [type: bool]
 
-    Retorno
-    -------
-    :return np.log1p(X): DataFrame após transformação [type: pd.DataFrame]
+    Return
+    ------
+    :return np.log1p(X): DataFrame after log application [type: pd.DataFrame]
 
     Application
     -----------
@@ -588,33 +592,35 @@ class DynamicLogTransformation(BaseEstimator, TransformerMixin):
         return self
     
     def transform(self, X, y=None):
-        # Validando aplicação do transformador
+        # Verifying application flag
         if not self.application:
             return X
         else:
-            # Extraindo índices das colunas
+            # Extracting columns indexes from num_features list
             cols_idx = [self.num_features.index(col) for col in self.cols_to_log]
             
-            # Validando tipo primitivo do input
+            # Applying transformation in case of data on array or dataframe type
             if type(X) is ndarray:
                 X[:, cols_idx] = np.log1p(X[:, cols_idx])
             elif type(X) is DataFrame:
                 X.iloc[:, cols_idx] = np.log1p(X.iloc[:, cols_idx])
             return X   
 
-
+# Applying scaling transformation with a selection flag that can be tunned
 class DynamicScaler(BaseEstimator, TransformerMixin):
     """
-    Classe responsável por aplicar normalização em uma base de dados
+    Applies a scaling process on numerical features. If the "scaler_type" class
+    attribute is set for None, there is no transformation applied. This 
+    attribute can be further tunned on built pipelines
 
-    Parâmetros
+    Parameters
     ----------
-    :param scaler_type: tipo de normalização [type: string]
-        * Opções: [None, 'Standard', 'MinMax']
+    :param scaler_type: normalization type [type: string]
+        *options: [None, 'Standard', 'MinMax']
 
-    Retorno
-    -------
-    :return X_scaled: array após a normalização
+    Return
+    ------
+    :return X_scaled: array after normalization
 
     Application
     -----------
@@ -629,7 +635,7 @@ class DynamicScaler(BaseEstimator, TransformerMixin):
         return self
     
     def transform(self, X, y=None):
-        # Validando aplicação de padronização
+        # Applying normalization based on scaler_type attribute
         if self.scaler_type == 'Standard':
             scaler = StandardScaler()
             return scaler.fit_transform(X)
@@ -643,27 +649,28 @@ class DynamicScaler(BaseEstimator, TransformerMixin):
 """
 ---------------------------------------------------
 ------------ 2. CUSTOM TRANSFORMERS ---------------
-        2.3 Pipelines de Consumo de Modelo
+        2.3 Pipelines for model consuption
 ---------------------------------------------------
 """
 
-class ConsumoModelo(BaseEstimator, TransformerMixin):
+# Using a trained model and creating new prediction columns on a source dataset
+class ModelResults(BaseEstimator, TransformerMixin):
     """
-    Classe responsável por realizar o consumo de um modelo e gerar uma base final com as predições (classe e score)
+    Executes the prediction methods of a trained model and appends prediction results on new columns of the source dataset
 
-    Parâmetros
+    Parameters
     ----------
-    :param model: estimator treinado do modelo a ser utilizado nas predições [type: estimator]
-    :param features: features finais do modelo após o step de preparação [type: list]
+    :param model: trained estimator to be used on predictions [type: estimator]
+    :param features: model features extracted after the preparation process [type: list]
 
-    Retorno
-    -------
-    :return df_pred: DataFrame contendo as features e os resultados das preidções [type: pd.DataFrame]
+    Return
+    ------
+    :return df_pred: DataFrame with model features and model prediction results [type: pd.DataFrame]
 
-    Aplicação
-    ---------
+    Application
+    -----------
     model = trainer._get_estimator(model_name='RandomForest')
-    model_exec = ConsumoModelo(model=model, features=MODEL_FEATURES)
+    model_exec = ModelResults(model=model, features=MODEL_FEATURES)
     df_pred = model_exec.fit_transform()
     """
     
@@ -675,10 +682,10 @@ class ConsumoModelo(BaseEstimator, TransformerMixin):
         return self
     
     def transform(self, X):
-        # Criando DataFrame com features do modelo
+        # Creating a DataFrame with model features
         df_final = pd.DataFrame(X, columns=self.features)
         
-        # Realizando predições
+        # MAking predictions and append new columns
         df_final['y_pred'] = self.model.predict(X)
         df_final['y_scores'] = self.model.predict_proba(X)[:, 1]
         
