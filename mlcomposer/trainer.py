@@ -1,19 +1,29 @@
 """
 ---------------------------------------------------
-------- TÓPICO: Machine Learning - Trainer --------
+-------------- MODULE: Transformers ---------------
 ---------------------------------------------------
-Módulo responsável por proporcionar componentes 
-inteligentes para o treinamento e avaliação de 
-modelos básicos de Machine Learning
+This useful module allocates custom classes built 
+for making the whole data preparation pipeline 
+easier for the user. With transformations wrote
+as python classes with BaseEstimator and 
+TransformerMixin from sklearn package, the objects
+inherits the fit_transform() method that can be
+applied on complete data preparation pipelines
+from easiest to hardest.
 
-Sumário
------------------------------------
-
------------------------------------
+Table of Contents
+---------------------------------------------------
+1. Initial setup
+    1.1 Importing libraries
+2. Custom Transformers
+    2.1 Initial pipelines
+    2.2 Data preparation pipelines
+    2.3 Pipelines for model consuption
+---------------------------------------------------
 """
 
-# Autor: Thiago Panini
-# Data: 13/04/2021
+# Author: Thiago Panini
+# Date: 13/04/2021
 
 
 """
