@@ -351,11 +351,12 @@ def save_fig(fig, output_path, img_name, tight_layout=True, dpi=300):
 ---------------------------------------------------
 """
 
-class ClassificadorBinario:
+class BinaryClassifier:
     """
-    Classe responsável por consolidar métodos úteis para o treinamento
-    e avaliação de modelos de classificação binária em um contexto de
-    aprendizado supervisionado
+    Trains and evaluate binary classification models.
+    The methods of this class enable a complete management of
+    binary classification tasks in every step of the development
+    workflow
     """
 
     def __init__(self):
@@ -366,125 +367,123 @@ class ClassificadorBinario:
 
     def fit(self, set_classifiers, X_train, y_train, **kwargs):
         """
-        Método responsável por treinar cada um dos classificadores contidos no dicionário
-        set_classifiers através da aplicação das regras estabelecidas pelos argumentos do método
+        Trains each classifier in set_classifiers dictionary through a defined setup
 
-        Parâmetros
+        Parameters
         ----------
-        :param set_classifiers: dicionário contendo informações dos modelos a serem treinados [type: dict]
+        :param set_classifiers: contains the setup for training the models [type: dict]
             set_classifiers = {
                 'model_name': {
                     'model': __estimator__,
                     'params': __estimator_params__
                 }
             }
-        :param X_train: features do modelo a ser treinado [type: np.array]
-        :param y_train: array contendo variável target do modelo [type: np.array]
-        :param **kwargs: argumentos adicionais do método
-            :arg approach: indicativo de sufixo para armazenamento no atributo classifiers_info [type: string, default: '']
-            :arg random_search: flag para aplicação do RandomizedSearchCV [type: bool, default: False]
-            :arg scoring: métrica a ser otimizada pelo RandomizedSearchCV [type: string, default: 'accuracy']
-            :arg cv: K-folds utiliados na validação cruzada [type: int, default: 5]
-            :arg verbose: nível de verbosity da busca aleatória [type: int, default: -1]
-            :arg n_jobs: quantidade de jobs aplicados durante a busca dos hiperparâmetros [type: int, default: -1]
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento de objetos do modelo [type: string, default=cwd() + 'output/models']
-            :arg model_ext: extensão do objeto gerado (pkl ou joblib) - sem o ponto [type: string, default='pkl']
+        :param X_train: features for training data [type: np.array]
+        :param y_train: target array for training data [type: np.array]
+        :param **kwargs: additional parameters
+            :arg approach: sufix string for identifying a different approach for models training [type: string, default='']
+            :arg random_search: boolean flag for applying RandomizedSearchCV on training [type: bool, default=False]
+            :arg scoring: optimization metric for RandomizedSearchCV (if applicable) [type: string, default='accuracy']
+            :arg cv: K-folds used on cross validation evaluation on RandomizerSearchCV [type: int, default=5]
+            :arg verbose: verbosity configured on hyperparameters search [type: int, default=-1]
+            :arg n_jobs: CPUs vcores to be used during hyperparameters search [type: int, default=-1]
+            :arg save: flag for saving pkl/joblib files for trained models on local disk [type: bool, default=True]
+            :arg output_path: folder path for pkl/joblib files to be saved [type: string, default=cwd() + 'output/models']
+            :arg model_ext: extension for model files (pkl or joblib) without point "." [type: string, default='pkl']
 
-        Retorno
-        -------
-        Este método não retorna nada além do preenchimento de informações do treinamento no atributo self.classifiers_info
+        Return
+        ------
+        This method doesn't return anything but the set of self.classifiers_info class attribute with useful info
 
-        Aplicação
-        ---------
-        # Instanciando objeto
-        trainer = ClassificadorBinario()
+        Application
+        -----------
+        # Initializing object and training models
+        trainer = BinaryClassifier()
         trainer.fit(set_classifiers, X_train_prep, y_train)
         """
 
-        # Referenciando argumentos adicionais
+        # Extracting approach from kwargs dictionary
         approach = kwargs['approach'] if 'approach' in kwargs else ''
 
-        # Iterando sobre os modelos presentes no dicionário de classificadores
+        # Iterating over each model on set_classifiers dictionary
         try:
             for model_name, model_info in set_classifiers.items():
-                # Definindo chave do classificador para o dicionário classifiers_info
+                # Defining a custom key for the further classifiers_info class attribute dictionary
                 model_key = model_name + approach
-                logger.debug(f'Treinando modelo {model_key}')
+                logger.debug(f'Training model {model_key}')
                 model = model_info['model']
 
-                # Criando dicionário vazio para armazenar dados do modelo
+                # Creating an empty dictionary for storing model's info
                 self.classifiers_info[model_key] = {}
 
-                # Validando aplicação da busca aleatória pelos melhores hiperparâmetros
+                # Validating the application of random search for hyperparameter tunning
                 try:
                     if 'random_search' in kwargs and bool(kwargs['random_search']):
                         params = model_info['params']
                         
-                        # Retornando parâmetros em kwargs
+                        # Returning additional parameters from kwargs dictionary
                         scoring = kwargs['scoring'] if 'scoring' in kwargs else 'accuracy'
                         cv = kwargs['cv'] if 'cv' in kwargs else 5
                         verbose = kwargs['verbose'] if 'verbose' in kwargs else -1
                         n_jobs = kwargs['n_jobs'] if 'n_jobs' in kwargs else -1
                         
-                        # Preparando e aplicando busca
+                        # Preparing and applying search
                         rnd_search = RandomizedSearchCV(model, params, scoring=scoring, cv=cv,
                                                         verbose=verbose, random_state=42, n_jobs=n_jobs)
-                        logger.debug('Aplicando RandomizedSearchCV')
+                        logger.debug('Applying RandomizedSearchCV')
                         rnd_search.fit(X_train, y_train)
 
-                        # Salvando melhor modelo no atributo classifiers_info
+                        # Saving the best model on classifiers_info class dictionary
                         self.classifiers_info[model_key]['estimator'] = rnd_search.best_estimator_
                     else:
-                        # Treinando modelo sem busca e salvando no atirbuto
+                        # Training model without searching for best hyperparameters
                         self.classifiers_info[model_key]['estimator'] = model.fit(X_train, y_train)
                 except TypeError as te:
-                    logger.error(f'Erro ao aplicar RandomizedSearch. Exception lançada: {te}')
+                    logger.error(f'Error when trying RandomizedSearch. Exception: {te}')
                     return
 
-                # Validando salvamento de objetos pkl dos modelos
+                # Saving pkl files if applicable
                 if 'save' in kwargs and bool(kwargs['save']):
-                    logger.debug(f'Salvando arquivo pkl do modelo {model_name} treinado')
+                    logger.debug(f'Saving model file for {model_name} on {model_ext} format')
                     model = self.classifiers_info[model_key]['estimator']
                     output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/models')
                     model_ext = kwargs['model_ext'] if 'model_ext' in kwargs else 'pkl'
 
                     anomesdia = datetime.now().strftime('%Y%m%d')
-                    save_model(model, output_path=output_path, 
-                                    filename=model_name.lower() + '_' +  anomesdia + '.' + model_ext)
+                    filename = model_name.lower() + '_' +  anomesdia + '.' + model_ext
+                    save_model(model, output_path=output_path, filename=filename)
 
         except AttributeError as ae:
-            logger.error(f'Erro ao treinar modelos. Exception lançada: {ae}')
-            logger.warning(f'Treinamento do(s) modelo(s) não realizado')
+            logger.error(f'Error when training models. Exception: {ae}')
 
     def compute_train_performance(self, model_name, estimator, X, y, cv=5):
         """
-        Método responsável por aplicar validação cruzada para retornar a amédia das principais métricas de avaliação
-        de um modelo de classificação. Na prática, esse método é chamado por um outro método em uma camada
-        superior da classe para medição de performance em treino e em teste
+        Applies cross validation for returning the main binary classification metrics for trained models.
+        In practice, this method is usually applied on a top layer of the class, or in other words, it is usually
+        executed by another method for extracting metrics on training and validating data
 
-        Parâmetros
+        Parameters
         ----------
-        :param model_name: chave identificadora do modelo contida no atributo self.classifiers_info [type: string]
-        :param estimator: estimator do modelo a ser avaliado [type: object]
-        :param X: conjunto de features do modelo contido nos dados de treino [type: np.array]
-        :param y: array contendo a variável resposta dos dados de treino do modelo [type: np.array]
-        :param cv: K-folds utiliados na validação cruzada [type: int, default: 5]
+        :param model_name: model key on self.classifiers_info class attribute [type: string]
+        :param estimator: model estimator to be evaluated [type: object]
+        :param X: model features for training data [type: np.array]
+        :param y: target array for training data [type: np.array]
+        :param cv: K-folds used on cross validation step [type: int, default=5]
 
-        Retorno
-        -------
-        :return train_performance: DataFrame contendo as métricas calculadas usando validação cruzada [type: pd.DataFrame]
+        Return
+        ------
+        :return train_performance: dataset with metrics computed using cross validation on training set [type: pd.DataFrame]
 
-        Aplicação
-        ---------
-        # Instanciando e treinando modelo
+        Application
+        -----------
+        # Initializing and training models
         trainer = ClassificadorBinario()
         trainer.fit(model, X_train, y_train)
         train_performance = trainer.compute_train_performance(model_name, estimator, X_train, y_train)
         """
 
-        # Computando métricas utilizando validação cruzada
-        logger.debug(f'Computando métricas do modelo {model_name} utilizando validação cruzada com {cv} K-folds')
+        # Computing metrics using cross validation
+        logger.debug(f'Computing metrics on {model_name} using cross validation with {cv} K-folds')
         try:
             t0 = time.time()
             accuracy = cross_val_score(estimator, X, y, cv=cv, scoring='accuracy').mean()
@@ -492,71 +491,71 @@ class ClassificadorBinario:
             recall = cross_val_score(estimator, X, y, cv=cv, scoring='recall').mean()
             f1 = cross_val_score(estimator, X, y, cv=cv, scoring='f1').mean()
 
-            # Probabilidades para o cálculo da AUC
+            # Computing probabilities for AUC metrics
             try:
                 y_scores = cross_val_predict(estimator, X, y, cv=cv, method='decision_function')
             except:
-                # Modelos baseados em árvore não possuem o método decision_function() mas sim o predict_proba()
+                # Tree models don't have decision_function() method but predict_proba()
                 y_probas = cross_val_predict(estimator, X, y, cv=cv, method='predict_proba')
                 y_scores = y_probas[:, 1]
             auc = roc_auc_score(y, y_scores)
 
-            # Salvando métricas no atributo self.classifiers_info
+            # Saving metrics on self.classifiers_info class attribute
             self.classifiers_info[model_name]['train_scores'] = y_scores
 
-            # Criando DataFrame com o resultado obtido
+            # Creating a DataFrame with performance result
             t1 = time.time()
             delta_time = t1 - t0
             train_performance = {}
             train_performance['model'] = model_name
-            train_performance['approach'] = f'Treino {cv} K-folds'
+            train_performance['approach'] = f'Train {cv} K-folds'
             train_performance['acc'] = round(accuracy, 4)
             train_performance['precision'] = round(precision, 4)
             train_performance['recall'] = round(recall, 4)
             train_performance['f1'] = round(f1, 4)
             train_performance['auc'] = round(auc, 4)
             train_performance['total_time'] = round(delta_time, 3)
-            logger.info(f'Métricas computadas com sucesso nos dados de treino em {round(delta_time, 3)} segundos')
+            logger.info(f'Sucessfully computed metrics on training data in {round(delta_time, 3)} seconds')
 
             return pd.DataFrame(train_performance, index=train_performance.keys()).reset_index(drop=True).loc[:0, :]
 
         except Exception as e:
-            logger.error(f'Erro ao computar as métricas. Exception lançada: {e}')    
+            logger.error(f'Error on computing metrics. Exception: {e}')    
 
-    def compute_test_performance(self, model_name, estimator, X, y):
+    def compute_val_performance(self, model_name, estimator, X, y):
         """
-        Método responsável por aplicar retornar as principais métricas do model utilizando dados de teste.
-        Na prática, esse método é chamado por um outro método em uma camada superior da classe para medição 
-        de performance em treino e em teste
+        Computes metrics on validation datasets for binary classifiers.
+        In practice, this method is usually applied on a top layer of the class, or in other words, it is usually
+        executed by another method for extracting metrics on training and validating data
 
-        Parâmetros
+        Parameters
         ----------
-        :param model_name: chave identificadora do modelo contida no atributo self.classifiers_info [type: string]
-        :param estimator: estimator do modelo a ser avaliado [type: object]
-        :param X: conjunto de features do modelo contido nos dados de teste [type: np.array]
-        :param y: array contendo a variável resposta dos dados de teste do modelo [type: np.array]
+        :param model_name: model key on self.classifiers_info class attribute [type: string]
+        :param estimator: model estimator to be evaluated [type: object]
+        :param X: model features for validation data [type: np.array]
+        :param y: target array for validation data [type: np.array]
 
-        Retorno
-        -------
-        :return test_performance: DataFrame contendo as métricas calculadas nos dados de teste [type: pd.DataFrame]
+        Return
+        ------
+        :return val_performance: dataset with metrics computed using cross validation on training set [type: pd.DataFrame]
 
-        Aplicação
-        ---------
-        # Instanciando e treinando modelo
-        trainer = ClassificadorBinario()
+        Application
+        -----------
+        # Initializing and training models
+        trainer = BinaryClassifier()
         trainer.fit(model, X_train, y_train)
-        test_performance = trainer.compute_test_performance(model_name, estimator, X_test, y_test)
+        val_performance = trainer.compute_val_performance(model_name, estimator, X_val, y_val)
         """
 
-        # Predicting data using the trained model and computing probabilities
-        logger.debug(f'Computando métricas do modelo {model_name} utilizando dados de teste')
+        # Computing metrics using cross validation
+        logger.debug(f'Computing metrics on {model_name} using validation data')
         try:
             t0 = time.time()
             y_pred = estimator.predict(X)
             y_proba = estimator.predict_proba(X)
             y_scores = y_proba[:, 1]
 
-            # Retrieving metrics using test data
+            # Retrieving metrics using validation data
             accuracy = accuracy_score(y, y_pred)
             precision = precision_score(y, y_pred)
             recall = recall_score(y, y_pred)
@@ -564,91 +563,90 @@ class ClassificadorBinario:
             auc = roc_auc_score(y, y_scores)
 
             # Saving probabilities on treined classifiers dictionary
-            self.classifiers_info[model_name]['test_scores'] = y_scores
+            self.classifiers_info[model_name]['val_scores'] = y_scores
 
             # Creating a DataFrame with metrics
             t1 = time.time()
             delta_time = t1 - t0
             test_performance = {}
             test_performance['model'] = model_name
-            test_performance['approach'] = f'Teste'
+            test_performance['approach'] = f'Validation'
             test_performance['acc'] = round(accuracy, 4)
             test_performance['precision'] = round(precision, 4)
             test_performance['recall'] = round(recall, 4)
             test_performance['f1'] = round(f1, 4)
             test_performance['auc'] = round(auc, 4)
             test_performance['total_time'] = round(delta_time, 3)
-            logger.info(f'Métricas computadas com sucesso nos dados de teste em {round(delta_time, 3)} segundos')
+            logger.info(f'Sucesfully computed metrics using validation data for {model_name} on {round(delta_time, 3)} seconds')
 
             return pd.DataFrame(test_performance, index=test_performance.keys()).reset_index(drop=True).loc[:0, :]
 
         except Exception as e:
-            logger.error(f'Erro ao computar as métricas. Exception lançada: {e}')
+            logger.error(f'Error on computing metrics. Exception: {e}')
 
-    def evaluate_performance(self, X_train, y_train, X_test, y_test, cv=5, **kwargs):
+    def evaluate_performance(self, X_train, y_train, X_val, y_val, cv=5, **kwargs):
         """
-        Método responsável por executar e retornar métricas dos classificadores em treino (média do resultado
-        da validação cruzada com cv K-fols) e teste
+        Executes and computes classification metrics for training and validation data
         
-        Parâmetros
+        Parameters
         ----------
-        :param X_train: conjunto de features do modelo contido nos dados de treino [type: np.array]
-        :param y_train: array contendo a variável resposta dos dados de treino do modelo [type: np.array]
-        :param X_test: conjunto de features do modelo contido nos dados de teste [type: np.array]
-        :param y_test: array contendo a variável resposta dos dados de teste do modelo [type: np.array]
-        :param cv: K-folds utiliados na validação cruzada [type: int, default: 5]
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/metrics']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='metrics.csv']
+        :param X_train: model features for training data [type: np.array]
+        :param y_train: target array for training data [type: np.array]
+        :param X_val: model features for validation data [type: np.array]
+        :param y_val: target array for validation data [type: np.array]
+        :param cv: K-folds used on cross validation step [type: int, default=5]
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/metrics']
+            :arg output_filename: name of csv file to be saved [type: string, default='metrics.csv']
         
-        Retorno
-        -------
-        :return df_performances: DataFrame contendo as métricas calculadas em treino e teste [type: pd.DataFrame]
+        Return
+        ------
+        :return df_performances: dataset with metrics obtained using training and validation data [type: pd.DataFrame]
 
         Aplicação
         -----------
-        # Treinando modelo e avaliando performance em treino e teste
-        trainer = ClassificadorBinario()
-        trainer.fit(estimator, X_train, X_test)
+        # Training model and evaluating performance on training and validation sets
+        trainer = BinaryClassifier()
+        trainer.fit(estimator, X_train, y_train)
 
-        # Definindo dicionário de controle do resultado
-        df_performance = trainer.evaluate_performance(X_train, y_train, X_test, y_test, save=True, output_path=caminho)
+        # Generating a performance dataset
+        df_performance = trainer.evaluate_performance(X_train, y_train, X_val, y_val)
         """
 
-        # DataFrame vazio para armazenamento das métrics
+        # Creating an empty DataFrame for storing metrics
         df_performances = pd.DataFrame({})
 
-        # Iterando sobre todos os classificadores da classe
+        # Iterating over the trained classifiers on the class attribute dictionary
         for model_name, model_info in self.classifiers_info.items():
 
-            # Validando se o modelo já foi treinado (dicionário model_info já terá a chave 'train_performance')
+            # Verifying if the model was already trained (model_info dict will have the key 'train_performance')
             if 'train_performance' in model_info.keys():
                 df_performances = df_performances.append(model_info['train_performance'])
                 df_performances = df_performances.append(model_info['test_performance'])
                 continue
 
-            # Retornando modelo a ser avaliado
+            # Returning the model to be evaluated
             try:
                 estimator = model_info['estimator']
             except KeyError as e:
-                logger.error(f'Erro ao retornar a chave "estimator" do dicionário model_info. Modelo {model_name} não treinado')
+                logger.error(f'Error on returning the key "estimator" from model_info dict. Model {model_name} was not trained')
                 continue
 
-            # Computando performance em treino e em teste
+            # Computing performance on training and validation sets
             train_performance = self.compute_train_performance(model_name, estimator, X_train, y_train, cv=cv)
-            test_performance = self.compute_test_performance(model_name, estimator, X_test, y_test)
+            test_performance = self.compute_test_performance(model_name, estimator, X_val, y_val)
 
-            # Adicionando os resultados ao atributo classifiers_info
+            # Setting up results on classifiers_info class dict
             self.classifiers_info[model_name]['train_performance'] = train_performance
-            self.classifiers_info[model_name]['test_performance'] = test_performance
+            self.classifiers_info[model_name]['val_performance'] = test_performance
 
-            # Construindo DataFrame com as métricas retornadas
+            # Building a DataFrame with model metrics
             model_performance = train_performance.append(test_performance)
             df_performances = df_performances.append(model_performance)
             df_performances['anomesdia_datetime'] = datetime.now()
 
-            # Salvando alguns atributos no dicionário classifiers_info para acessos futuros
+            # Saving some attributes on classifiers_info for maybe retrieving in the future
             model_data = {
                 'X_train': X_train,
                 'y_train': y_train,
@@ -657,7 +655,7 @@ class ClassificadorBinario:
             }
             model_info['model_data'] = model_data
 
-        # Validando salvamento dos resultados
+        # Saving results if applicable
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/metrics')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'metrics.csv'
