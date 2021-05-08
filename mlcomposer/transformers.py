@@ -521,7 +521,10 @@ class FeatureSelection(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         # Extract indexes for the top k features and selects the DataFrame
         indices = np.sort(np.argpartition(np.array(self.feature_importance), -self.k)[-self.k:])
-        return X[:, indices]
+        if type(X) is DataFrame:
+            return X.iloc[:, indices]
+        else:
+            return X[:, indices]
 
 # Applying logarithm transformation on features
 class LogTransformation(BaseEstimator, TransformerMixin):
