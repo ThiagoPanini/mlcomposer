@@ -45,15 +45,15 @@ from dotenv import load_dotenv, find_dotenv
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from mlcomposer.transformers import FiltraColunas, ModificaTipoPrimitivo, \
-    EliminaDuplicatas, DynamicLogTransformation, DynamicScaler, DummiesEncoding
+from mlcomposer.transformers import ColumnSelection, DtypeModifier, \
+    DropDuplicates, DynamicLogTransformation, DynamicScaler, DummiesEncoding
 
 # Modelagem dos dados
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from mlcomposer.trainer import ClassificadorBinario
+from mlcomposer.trainer import BinaryClassifier
 
 
 """
@@ -128,15 +128,15 @@ test = pd.read_csv(TEST_PATH)
 
 # Construindo pipeline inicial utilizado no treinamento
 initial_train_pipeline = Pipeline([
-    ('col_filter', FiltraColunas(features=INITIAL_FEATURES)),
-    ('dtype_modifier', ModificaTipoPrimitivo(mod_dict=DTYPE_MODIFICATION_DICT)),
-    ('dup_dropper', EliminaDuplicatas())
+    ('col_filter', ColumnSelection(features=INITIAL_FEATURES)),
+    ('dtype_modifier', DtypeModifier(mod_dict=DTYPE_MODIFICATION_DICT)),
+    ('dup_dropper', DropDuplicates())
 ])
 
 # Construindo pipeline inicial utilizado na predição (sem eliminação de duplicatas)
 initial_pred_pipeline = Pipeline([
-    ('col_filter', FiltraColunas(features=INITIAL_PRED_FEATURES)),
-    ('dtype_modifier', ModificaTipoPrimitivo(mod_dict=DTYPE_MODIFICATION_DICT))
+    ('col_filter', ColumnSelection(features=INITIAL_PRED_FEATURES)),
+    ('dtype_modifier', DtypeModifier(mod_dict=DTYPE_MODIFICATION_DICT))
 ])
 
 # Construindo pipeline numérico
@@ -205,7 +205,7 @@ set_classifiers = {name: {'model': obj, 'params': {}} for (name, obj) in zip(mod
 """
 
 # Instanciando novo objeto
-trainer = ClassificadorBinario()
+trainer = BinaryClassifier()
 
 # Realizando treinamento e avaliação dos modelos
 trainer.training_flow(set_classifiers, X_train_prep, y_train, X_val_prep, y_val, 
