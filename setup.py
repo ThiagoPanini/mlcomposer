@@ -37,18 +37,18 @@ reqs = [str(ir.req) for ir in install_reqs]"""
 # Criando setup
 setup(
     name='mlcomposer',
-    version='0.0.7',
+    version='0.0.10',
     author='Thiago Panini',
     author_email='thipanini94@gmail.com',
     packages=find_packages(),
     install_requires=[
-        'pandas==1.1.5',
-        'numpy==1.18.5',
-        'scikit-learn==0.23.2',
+        'pandas',
+        'numpy',
+        'scikit-learn',
         'shap==0.37.0',
-        'matplotlib==3.2.1'
-        'seaborn==0.11.1',
-        'joblib==0.14.1',
+        'matplotlib',
+        'seaborn',
+        'joblib',
         'python-dotenv==0.17.0'
     ],
     license='MIT',

@@ -1,29 +1,44 @@
 """
 ---------------------------------------------------
-------- TÓPICO: Machine Learning - Trainer --------
+----------------- MODULE: Trainer -----------------
 ---------------------------------------------------
-Módulo responsável por proporcionar componentes 
-inteligentes para o treinamento e avaliação de 
-modelos básicos de Machine Learning
+This must-use module has excellent classes and
+methods for complete training and evaluating 
+Machine Learning models with just few lines of code.
+It really encapsulates almost all the hard work of
+data scientists and data analysts by presenting
+classes with methods for training, optimizing
+models hyperparemeters, generating performance
+reports, plotting feature importances, confusion
+matrix, roc curves and much more!
 
-Sumário
------------------------------------
-
------------------------------------
+Table of Contents
+---------------------------------------------------
+1. Initial setup
+    1.1 Importing libraries
+    1.2 Setting up logging
+    1.3 Functions for formatting charts
+    1.4 Functions for saving objects
+2. Classification
+    2.1 Binary classification
+    2.2 Multiclass classification
+3. Regression
+    2.1 Linear regression
+---------------------------------------------------
 """
 
-# Autor: Thiago Panini
-# Data: 13/04/2021
+# Author: Thiago Panini
+# Date: 13/04/2021
 
 
 """
 ---------------------------------------------------
------------- 1. CONFIGURAÇÃO INICIAL --------------
-           1.1 Importando bibliotecas
+---------------- 1. INITIAL SETUP -----------------
+             1.1 Importing libraries
 ---------------------------------------------------
 """
 
-# Bibliotecas padrão
+# Standard libraries
 import pandas as pd
 import numpy as np
 import time
@@ -34,7 +49,7 @@ import os
 from os import makedirs, getcwd
 from os.path import isdir, join
 
-# Modelagem 
+# Machine Learning 
 import joblib
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import cross_val_score, cross_val_predict, learning_curve
@@ -45,14 +60,14 @@ from sklearn.metrics import classification_report
 from sklearn.exceptions import NotFittedError
 import shap
 
-# Visualização
+# Viz
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib.patches import Patch
 from matplotlib.axes import Axes
 import seaborn as sns
 
-# AnnotateBars class (referência na classe)
+# For AnnotateBars class
 from dataclasses import dataclass
 from typing import *
 
@@ -62,31 +77,32 @@ import logging
 
 """
 ---------------------------------------------------
------------- 1. CONFIGURAÇÃO INICIAL --------------
-           1.2 Definindo objetos de log
+---------------- 1. INITIAL SETUP -----------------
+              1.2 Setting up logging
 ---------------------------------------------------
 """
 
+# Function for a useful log configuration
 def log_config(logger, level=logging.DEBUG, 
                log_format='%(levelname)s;%(asctime)s;%(filename)s;%(module)s;%(lineno)d;%(message)s',
                log_filepath=os.path.join(os.getcwd(), 'exec_log/execution_log.log'),
                flag_file_handler=False, flag_stream_handler=True, filemode='a'):
     """
-    Função que recebe um objeto logging e aplica configurações básicas ao mesmo
+    Uses a logging object for applying basic configuration on it
 
-    Parâmetros
+    Parameters
     ----------
-    :param logger: objeto logger criado no escopo do módulo [type: logging.getLogger()]
-    :param level: level do objeto logger criado [type: level, default: logging.DEBUG]
-    :param log_format: formato do log a ser armazenado [type: string]
-    :param log_filepath: caminho onde o arquivo .log será armazenado [type: string, default: 'log/application_log.log']
-    :param flag_file_handler: flag para salvamento de arquivo .log [type: bool, default=False]
-    :param flag_stream_handler: flag para verbosity do log no cmd [type: bool, default=True]
-    :param filemode: tipo de escrita no arquivo de log [type: string, default: 'a' (append)]
+    :param logger: logger object created on module scope [type: logging.getLogger()]
+    :param level: logger object level [type: level, default=logging.DEBUG]
+    :param log_format: logger format to be stored [type: string]
+    :param log_filepath: path where .log file will be stored [type: string, default='log/application_log.log']
+    :param flag_file_handler: flag for saving .log file [type: bool, default=False]
+    :param flag_stream_handler: flag for log verbosity on cmd [type: bool, default=True]
+    :param filemode: write type on the log file [type: string, default='a' (append)]
 
-    Retorno
-    -------
-    :return logger: objeto logger pré-configurado
+    Return
+    ------
+    :return logger: pre-configured logger object
     """
 
     # Setting level for the logger object
@@ -101,58 +117,57 @@ def log_config(logger, level=logging.DEBUG,
         if not isdir(log_path):
             makedirs(log_path)
 
-        # Adicionando file_handler
+        # Adding file_handler
         file_handler = logging.FileHandler(log_filepath, mode=filemode, encoding='utf-8')
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
     if flag_stream_handler:
-        # Adicionando stream_handler
+        # Adding stream_handler
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)    
         logger.addHandler(stream_handler)
 
     return logger
 
-
-# Configurando objeto de log
+# Setting up logger object
 logger = logging.getLogger(__file__)
 logger = log_config(logger)
 
 
 """
 ---------------------------------------------------
------------- 1. CONFIGURAÇÃO INICIAL --------------
-   1.2 Eixos de plotagem e formatação de rótulos
+---------------- 1. INITIAL SETUP -----------------
+        1.3 Functions for formatting charts
 ---------------------------------------------------
 """
 
-# Formatando eixos do matplotlib
-def format_spines(ax, right_border=True):
+# Formatting spines in a matplotlib plot
+def format_spines(ax, right_border=False):
     """
-    Função responsável por modificar as bordas e cores de eixos do matplotlib
+    Modify borders and axis colors of matplotlib figures
 
-    Parâmetros
+    Parameters
     ----------
-    :param ax: eixo do gráfico criado no matplotlib [type: matplotlib.pyplot.axes]
-    :param right_border: flag para plotagem ou ocultação da borda direita [type: bool, default=True]
+    :param ax: figura axis created using matplotlib [type: matplotlib.pyplot.axes]
+    :param right_border: boolean flag for hiding right border [type: bool, default=False]
 
-    Retorno
+    Return
+    ------
+    This functions has no return besides the customization of matplotlib axis
+
+    Example
     -------
-    Esta função não retorna nenhum parâmetro além do eixo devidamente customizado
-
-    Aplicação
-    ---------
     fig, ax = plt.subplots()
     format_spines(ax=ax, right_border=False)
     """
 
-    # Definindo cores dos eixos
+    # Setting colors on the axis
     ax.spines['bottom'].set_color('#CCCCCC')
     ax.spines['left'].set_color('#CCCCCC')
     ax.spines['top'].set_visible(False)
 
-    # Validando plotagem da borda direita
+    # Right border formatting
     if right_border:
         ax.spines['right'].set_color('#CCCCCC')
     else:
@@ -160,8 +175,8 @@ def format_spines(ax, right_border=True):
     ax.patch.set_facecolor('#FFFFFF')
 
 
-# Referência: https://towardsdatascience.com/annotating-bar-charts-and-other-matplolib-techniques-cecb54315015
-# Criando allias
+# Reference: https://towardsdatascience.com/annotating-bar-charts-and-other-matplolib-techniques-cecb54315015
+# Creating allias
 #Patch = matplotlib.patches.Patch
 PosVal = Tuple[float, Tuple[float, float]]
 #Axis = matplotlib.axes.Axes
@@ -202,165 +217,146 @@ class AnnotateBars:
             ax.annotate(f"{value:.{self.n_dec}f}", pos, **cfg)
 
 
-# Definindo funções úteis para plotagem dos rótulos no gráfico
-def make_autopct(values):
-    """
-    Função para configuração de rótulos em gráficos de rosca
-
-    Parâmetros
-    ----------
-    :param values: valores atrelados ao rótulo [type: np.array]
-
-    Retorno
-    -------
-    :return my_autopct: string formatada para plotagem dos rótulos
-    """
-
-    def my_autopct(pct):
-        total = sum(values)
-        val = int(round(pct * total / 100.0))
-
-        return '{p:.1f}%\n({v:d})'.format(p=pct, v=val)
-
-    return my_autopct
-
-
 """
 ---------------------------------------------------
------------- 1. CONFIGURAÇÃO INICIAL --------------
-  1.3 Funções estáticas para salvamento de objetos
+---------------- 1. INITIAL SETUP -----------------
+         1.3 Functions for saving objects
 ---------------------------------------------------
 """
 
-# Função responsável por salvar arquivos csv
+# Saving DataFrames on csv format
 def save_data(data, output_path, filename):
     """
     Método responsável por salvar objetos DataFrame em formato csv.
 
-    Parâmetros
+    Parameters
     ----------
-    :param data: arquivo/objeto a ser salvo [type: pd.DataFrame]
-    :param output_path: referência de diretório destino [type: string]
-    :param filename: referência do nome do arquivo a ser salvo [type: string]
+    :param data: data to be saved [type: pd.DataFrame]
+    :param output_path: path reference for the file [type: string]
+    :param filename: filename for the file with .csv extension [type: string]
 
-    Retorno
-    -------
-    Este método não retorna nenhum parâmetro além do arquivo devidamente salvo no diretório
+    Return
+    ------
+    There is no return besides the file saved on local machine
 
-    Aplicação
-    ---------
+    Application
+    -----------
     df = file_generator_method()
     save_result(df, output_path=OUTPUT_PATH, filename='arquivo.csv')
     """
 
-    # Verificando se diretório existe
+    # Searching if directory exists
     if not os.path.isdir(output_path):
-        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
+        logger.warning(f'Path {output_path} not exists. Creating directory on the path')
         try:
             os.makedirs(output_path)
         except Exception as e:
-            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
+            logger.error(f'Error on training to create directory {output_path}. Exception: {e}')
             return
 
-    logger.debug(f'Salvando arquivo no diretório especificado')
+    logger.debug(f'Saving file on directory')
     try:
         output_file = os.path.join(output_path, filename)
         data.to_csv(output_file, index=False)
     except Exception as e:
-        logger.error(f'Erro ao salvar arquivo {filename}. Exception lançada: {e}')
+        logger.error(f'Error on saving file {filename}. Exception: {e}')
 
-# Função responsável por salvar modelos em formato pkl
+# Saving model in pkl format
 def save_model(model, output_path, filename):
     """
-    Método responsável por salvar modelos treinado em fomato pkl.
+    Saves trained model and pipelines on pkl format
 
-    Parâmetros
-    ----------
-    :param model: objeto a ser salvo [type: model]
-    :param output_path: referência de diretório destino [type: string]
-    :param filename: referência do nome do modelo a ser salvo [type: string]
-
-    Retorno
-    -------
-    Este método não retorna nenhum parâmetro além do objeto devidamente salvo no diretório
-
-    Aplicação
+    Parameter
     ---------
+    :param model: model object to be saved [type: model]
+    :param output_path: path reference for the file [type: string]
+    :param filename: filename for the file with .csv extension [type: string]
+
+    Return
+    ------
+    There is no return besides the object saved on local machine
+
+    Application
+    -----------
     model = classifiers['estimator']
     save_model(model, output_path=OUTPUT_PATH, filename='model.pkl')
     """
 
-    # Verificando se diretório existe
+    # Searching if directory exists
     if not os.path.isdir(output_path):
-        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
+        logger.warning(f'Path {output_path} not exists. Creating directory on the path')
         try:
             os.makedirs(output_path)
         except Exception as e:
-            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
+            logger.error(f'Error on training to create directory {output_path}. Exception: {e}')
             return
 
-    logger.debug(f'Salvando modelo pkl no diretório especificado')
+    logger.debug(f'Saving pkl file on directory')
     try:
         output_file = os.path.join(output_path, filename)
         joblib.dump(model, output_file)
     except Exception as e:
-        logger.error(f'Erro ao salvar modelo {filename}. Exception lançada: {e}')
+        logger.error(f'Error on saving model {filename}. Exception: {e}')
 
-# Função responsável por salvar imagens em formato png
+# Saving figures generated from matplotlib
 def save_fig(fig, output_path, img_name, tight_layout=True, dpi=300):
     """
-    Método responsável por salvar imagens geradas pelo matplotlib/seaborn
+    Saves figures created from matplotlib/seaborn
 
-    Parâmetros
+    Parameters
     ----------
-    :param fig: figura criada pelo matplotlib para a plotagem gráfica [type: plt.figure]
-    :param output_file: caminho final a ser salvo (+ nome do arquivo em formato png) [type: string]
-    :param tight_layout: flag que define o acerto da imagem [type: bool, default=True]
-    :param dpi: resolução da imagem a ser salva [type: int, default=300]
+    :param fig: figure created using matplotlib [type: plt.figure]
+    :param output_file: path for image to be saved (path + filename in png format) [type: string]
+    :param tight_layout: flag for tighting figure layout before saving it [type: bool, default=True]
+    :param dpi: image resolution [type: int, default=300]
 
-    Retorno
-    -------
-    Este método não retorna nenhum parâmetro além do salvamento da imagem em diretório especificado
+    Return
+    ------
+    This function returns nothing besides the image saved on the given path
 
-    Aplicação
+    Application
     ---------
     fig, ax = plt.subplots()
-    save_fig(fig, output_file='imagem.png')
+    save_fig(fig, output_file='image.png')
     """
 
-    # Verificando se diretório existe
+    # Searching for the existance of the directory
     if not os.path.isdir(output_path):
-        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
+        logger.warning(f'Directory {output_path} not exists. Creating a directory on the given path')
         try:
             os.makedirs(output_path)
         except Exception as e:
-            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
+            logger.error(f'Error on creating the directory {output_path}. Exception: {e}')
+            return
     
-    # Acertando layout da imagem
+    # Tighting layout
     if tight_layout:
         fig.tight_layout()
     
-    logger.debug('Salvando imagem no diretório especificado')
+    logger.debug('Saving image on directory')
     try:
         output_file = os.path.join(output_path, img_name)
         fig.savefig(output_file, dpi=300)
-        logger.info(f'Imagem salva com sucesso em {output_file}')
+        logger.info(f'Image succesfully saved in {output_file}')
     except Exception as e:
-        logger.error(f'Erro ao salvar imagem. Exception lançada: {e}')
+        logger.error(f'Error on saving image. Exception: {e}')
+        return
+
 
 
 """
 ---------------------------------------------------
---------------- 2. CLASSIFICAÇÃO ------------------
-           2.1 Classificador Binário
+---------------- 2. CLASSIFICATION ----------------
+             2.1 Binary Classification
 ---------------------------------------------------
 """
 
-class ClassificadorBinario:
+class BinaryClassifier:
     """
-    Classe responsável por consolidar métodos úteis para o treinamento
-    e avaliação de modelos de classificação binária em um contexto de
-    aprendizado supervisionado
+    Trains and evaluate binary classification models.
+    The methods of this class enable a complete management of
+    binary classification tasks in every step of the development
+    workflow
     """
 
     def __init__(self):
@@ -371,125 +367,123 @@ class ClassificadorBinario:
 
     def fit(self, set_classifiers, X_train, y_train, **kwargs):
         """
-        Método responsável por treinar cada um dos classificadores contidos no dicionário
-        set_classifiers através da aplicação das regras estabelecidas pelos argumentos do método
+        Trains each classifier in set_classifiers dictionary through a defined setup
 
-        Parâmetros
+        Parameters
         ----------
-        :param set_classifiers: dicionário contendo informações dos modelos a serem treinados [type: dict]
+        :param set_classifiers: contains the setup for training the models [type: dict]
             set_classifiers = {
                 'model_name': {
                     'model': __estimator__,
                     'params': __estimator_params__
                 }
             }
-        :param X_train: features do modelo a ser treinado [type: np.array]
-        :param y_train: array contendo variável target do modelo [type: np.array]
-        :param **kwargs: argumentos adicionais do método
-            :arg approach: indicativo de sufixo para armazenamento no atributo classifiers_info [type: string, default: '']
-            :arg random_search: flag para aplicação do RandomizedSearchCV [type: bool, default: False]
-            :arg scoring: métrica a ser otimizada pelo RandomizedSearchCV [type: string, default: 'accuracy']
-            :arg cv: K-folds utiliados na validação cruzada [type: int, default: 5]
-            :arg verbose: nível de verbosity da busca aleatória [type: int, default: -1]
-            :arg n_jobs: quantidade de jobs aplicados durante a busca dos hiperparâmetros [type: int, default: -1]
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento de objetos do modelo [type: string, default=cwd() + 'output/models']
-            :arg model_ext: extensão do objeto gerado (pkl ou joblib) - sem o ponto [type: string, default='pkl']
+        :param X_train: features for training data [type: np.array]
+        :param y_train: target array for training data [type: np.array]
+        :param **kwargs: additional parameters
+            :arg approach: sufix string for identifying a different approach for models training [type: string, default='']
+            :arg random_search: boolean flag for applying RandomizedSearchCV on training [type: bool, default=False]
+            :arg scoring: optimization metric for RandomizedSearchCV (if applicable) [type: string, default='accuracy']
+            :arg cv: K-folds used on cross validation evaluation on RandomizerSearchCV [type: int, default=5]
+            :arg verbose: verbosity configured on hyperparameters search [type: int, default=-1]
+            :arg n_jobs: CPUs vcores to be used during hyperparameters search [type: int, default=-1]
+            :arg save: flag for saving pkl/joblib files for trained models on local disk [type: bool, default=True]
+            :arg output_path: folder path for pkl/joblib files to be saved [type: string, default=cwd() + 'output/models']
+            :arg model_ext: extension for model files (pkl or joblib) without point "." [type: string, default='pkl']
 
-        Retorno
-        -------
-        Este método não retorna nada além do preenchimento de informações do treinamento no atributo self.classifiers_info
+        Return
+        ------
+        This method doesn't return anything but the set of self.classifiers_info class attribute with useful info
 
-        Aplicação
-        ---------
-        # Instanciando objeto
-        trainer = ClassificadorBinario()
+        Application
+        -----------
+        # Initializing object and training models
+        trainer = BinaryClassifier()
         trainer.fit(set_classifiers, X_train_prep, y_train)
         """
 
-        # Referenciando argumentos adicionais
+        # Extracting approach from kwargs dictionary
         approach = kwargs['approach'] if 'approach' in kwargs else ''
 
-        # Iterando sobre os modelos presentes no dicionário de classificadores
+        # Iterating over each model on set_classifiers dictionary
         try:
             for model_name, model_info in set_classifiers.items():
-                # Definindo chave do classificador para o dicionário classifiers_info
+                # Defining a custom key for the further classifiers_info class attribute dictionary
                 model_key = model_name + approach
-                logger.debug(f'Treinando modelo {model_key}')
+                logger.debug(f'Training model {model_key}')
                 model = model_info['model']
 
-                # Criando dicionário vazio para armazenar dados do modelo
+                # Creating an empty dictionary for storing model's info
                 self.classifiers_info[model_key] = {}
 
-                # Validando aplicação da busca aleatória pelos melhores hiperparâmetros
+                # Validating the application of random search for hyperparameter tunning
                 try:
                     if 'random_search' in kwargs and bool(kwargs['random_search']):
                         params = model_info['params']
                         
-                        # Retornando parâmetros em kwargs
+                        # Returning additional parameters from kwargs dictionary
                         scoring = kwargs['scoring'] if 'scoring' in kwargs else 'accuracy'
                         cv = kwargs['cv'] if 'cv' in kwargs else 5
                         verbose = kwargs['verbose'] if 'verbose' in kwargs else -1
                         n_jobs = kwargs['n_jobs'] if 'n_jobs' in kwargs else -1
                         
-                        # Preparando e aplicando busca
+                        # Preparing and applying search
                         rnd_search = RandomizedSearchCV(model, params, scoring=scoring, cv=cv,
                                                         verbose=verbose, random_state=42, n_jobs=n_jobs)
-                        logger.debug('Aplicando RandomizedSearchCV')
+                        logger.debug('Applying RandomizedSearchCV')
                         rnd_search.fit(X_train, y_train)
 
-                        # Salvando melhor modelo no atributo classifiers_info
+                        # Saving the best model on classifiers_info class dictionary
                         self.classifiers_info[model_key]['estimator'] = rnd_search.best_estimator_
                     else:
-                        # Treinando modelo sem busca e salvando no atirbuto
+                        # Training model without searching for best hyperparameters
                         self.classifiers_info[model_key]['estimator'] = model.fit(X_train, y_train)
                 except TypeError as te:
-                    logger.error(f'Erro ao aplicar RandomizedSearch. Exception lançada: {te}')
+                    logger.error(f'Error when trying RandomizedSearch. Exception: {te}')
                     return
 
-                # Validando salvamento de objetos pkl dos modelos
+                # Saving pkl files if applicable
                 if 'save' in kwargs and bool(kwargs['save']):
-                    logger.debug(f'Salvando arquivo pkl do modelo {model_name} treinado')
+                    model_ext = kwargs['model_ext'] if 'model_ext' in kwargs else 'pkl'
+                    logger.debug(f'Saving model file for {model_name} on {model_ext} format')
                     model = self.classifiers_info[model_key]['estimator']
                     output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/models')
-                    model_ext = kwargs['model_ext'] if 'model_ext' in kwargs else 'pkl'
 
                     anomesdia = datetime.now().strftime('%Y%m%d')
-                    save_model(model, output_path=output_path, 
-                                    filename=model_name.lower() + '_' +  anomesdia + '.' + model_ext)
+                    filename = model_name.lower() + '_' +  anomesdia + '.' + model_ext
+                    save_model(model, output_path=output_path, filename=filename)
 
         except AttributeError as ae:
-            logger.error(f'Erro ao treinar modelos. Exception lançada: {ae}')
-            logger.warning(f'Treinamento do(s) modelo(s) não realizado')
+            logger.error(f'Error when training models. Exception: {ae}')
 
     def compute_train_performance(self, model_name, estimator, X, y, cv=5):
         """
-        Método responsável por aplicar validação cruzada para retornar a amédia das principais métricas de avaliação
-        de um modelo de classificação. Na prática, esse método é chamado por um outro método em uma camada
-        superior da classe para medição de performance em treino e em teste
+        Applies cross validation for returning the main binary classification metrics for trained models.
+        In practice, this method is usually applied on a top layer of the class, or in other words, it is usually
+        executed by another method for extracting metrics on training and validating data
 
-        Parâmetros
+        Parameters
         ----------
-        :param model_name: chave identificadora do modelo contida no atributo self.classifiers_info [type: string]
-        :param estimator: estimator do modelo a ser avaliado [type: object]
-        :param X: conjunto de features do modelo contido nos dados de treino [type: np.array]
-        :param y: array contendo a variável resposta dos dados de treino do modelo [type: np.array]
-        :param cv: K-folds utiliados na validação cruzada [type: int, default: 5]
+        :param model_name: model key on self.classifiers_info class attribute [type: string]
+        :param estimator: model estimator to be evaluated [type: object]
+        :param X: model features for training data [type: np.array]
+        :param y: target array for training data [type: np.array]
+        :param cv: K-folds used on cross validation step [type: int, default=5]
 
-        Retorno
-        -------
-        :return train_performance: DataFrame contendo as métricas calculadas usando validação cruzada [type: pd.DataFrame]
+        Return
+        ------
+        :return train_performance: dataset with metrics computed using cross validation on training set [type: pd.DataFrame]
 
-        Aplicação
-        ---------
-        # Instanciando e treinando modelo
+        Application
+        -----------
+        # Initializing and training models
         trainer = ClassificadorBinario()
         trainer.fit(model, X_train, y_train)
         train_performance = trainer.compute_train_performance(model_name, estimator, X_train, y_train)
         """
 
-        # Computando métricas utilizando validação cruzada
-        logger.debug(f'Computando métricas do modelo {model_name} utilizando validação cruzada com {cv} K-folds')
+        # Computing metrics using cross validation
+        logger.debug(f'Computing metrics on {model_name} using cross validation with {cv} K-folds')
         try:
             t0 = time.time()
             accuracy = cross_val_score(estimator, X, y, cv=cv, scoring='accuracy').mean()
@@ -497,71 +491,71 @@ class ClassificadorBinario:
             recall = cross_val_score(estimator, X, y, cv=cv, scoring='recall').mean()
             f1 = cross_val_score(estimator, X, y, cv=cv, scoring='f1').mean()
 
-            # Probabilidades para o cálculo da AUC
+            # Computing probabilities for AUC metrics
             try:
                 y_scores = cross_val_predict(estimator, X, y, cv=cv, method='decision_function')
             except:
-                # Modelos baseados em árvore não possuem o método decision_function() mas sim o predict_proba()
+                # Tree models don't have decision_function() method but predict_proba()
                 y_probas = cross_val_predict(estimator, X, y, cv=cv, method='predict_proba')
                 y_scores = y_probas[:, 1]
             auc = roc_auc_score(y, y_scores)
 
-            # Salvando métricas no atributo self.classifiers_info
+            # Saving metrics on self.classifiers_info class attribute
             self.classifiers_info[model_name]['train_scores'] = y_scores
 
-            # Criando DataFrame com o resultado obtido
+            # Creating a DataFrame with performance result
             t1 = time.time()
             delta_time = t1 - t0
             train_performance = {}
             train_performance['model'] = model_name
-            train_performance['approach'] = f'Treino {cv} K-folds'
+            train_performance['approach'] = f'Train {cv} K-folds'
             train_performance['acc'] = round(accuracy, 4)
             train_performance['precision'] = round(precision, 4)
             train_performance['recall'] = round(recall, 4)
             train_performance['f1'] = round(f1, 4)
             train_performance['auc'] = round(auc, 4)
             train_performance['total_time'] = round(delta_time, 3)
-            logger.info(f'Métricas computadas com sucesso nos dados de treino em {round(delta_time, 3)} segundos')
+            logger.info(f'Sucessfully computed metrics on training data in {round(delta_time, 3)} seconds')
 
             return pd.DataFrame(train_performance, index=train_performance.keys()).reset_index(drop=True).loc[:0, :]
 
         except Exception as e:
-            logger.error(f'Erro ao computar as métricas. Exception lançada: {e}')    
+            logger.error(f'Error on computing metrics. Exception: {e}')    
 
-    def compute_test_performance(self, model_name, estimator, X, y):
+    def compute_val_performance(self, model_name, estimator, X, y):
         """
-        Método responsável por aplicar retornar as principais métricas do model utilizando dados de teste.
-        Na prática, esse método é chamado por um outro método em uma camada superior da classe para medição 
-        de performance em treino e em teste
+        Computes metrics on validation datasets for binary classifiers.
+        In practice, this method is usually applied on a top layer of the class, or in other words, it is usually
+        executed by another method for extracting metrics on training and validating data
 
-        Parâmetros
+        Parameters
         ----------
-        :param model_name: chave identificadora do modelo contida no atributo self.classifiers_info [type: string]
-        :param estimator: estimator do modelo a ser avaliado [type: object]
-        :param X: conjunto de features do modelo contido nos dados de teste [type: np.array]
-        :param y: array contendo a variável resposta dos dados de teste do modelo [type: np.array]
+        :param model_name: model key on self.classifiers_info class attribute [type: string]
+        :param estimator: model estimator to be evaluated [type: object]
+        :param X: model features for validation data [type: np.array]
+        :param y: target array for validation data [type: np.array]
 
-        Retorno
-        -------
-        :return test_performance: DataFrame contendo as métricas calculadas nos dados de teste [type: pd.DataFrame]
+        Return
+        ------
+        :return val_performance: dataset with metrics computed using cross validation on training set [type: pd.DataFrame]
 
-        Aplicação
-        ---------
-        # Instanciando e treinando modelo
-        trainer = ClassificadorBinario()
+        Application
+        -----------
+        # Initializing and training models
+        trainer = BinaryClassifier()
         trainer.fit(model, X_train, y_train)
-        test_performance = trainer.compute_test_performance(model_name, estimator, X_test, y_test)
+        val_performance = trainer.compute_val_performance(model_name, estimator, X_val, y_val)
         """
 
-        # Predicting data using the trained model and computing probabilities
-        logger.debug(f'Computando métricas do modelo {model_name} utilizando dados de teste')
+        # Computing metrics using cross validation
+        logger.debug(f'Computing metrics on {model_name} using validation data')
         try:
             t0 = time.time()
             y_pred = estimator.predict(X)
             y_proba = estimator.predict_proba(X)
             y_scores = y_proba[:, 1]
 
-            # Retrieving metrics using test data
+            # Retrieving metrics using validation data
             accuracy = accuracy_score(y, y_pred)
             precision = precision_score(y, y_pred)
             recall = recall_score(y, y_pred)
@@ -569,100 +563,99 @@ class ClassificadorBinario:
             auc = roc_auc_score(y, y_scores)
 
             # Saving probabilities on treined classifiers dictionary
-            self.classifiers_info[model_name]['test_scores'] = y_scores
+            self.classifiers_info[model_name]['val_scores'] = y_scores
 
             # Creating a DataFrame with metrics
             t1 = time.time()
             delta_time = t1 - t0
             test_performance = {}
             test_performance['model'] = model_name
-            test_performance['approach'] = f'Teste'
+            test_performance['approach'] = f'Validation'
             test_performance['acc'] = round(accuracy, 4)
             test_performance['precision'] = round(precision, 4)
             test_performance['recall'] = round(recall, 4)
             test_performance['f1'] = round(f1, 4)
             test_performance['auc'] = round(auc, 4)
             test_performance['total_time'] = round(delta_time, 3)
-            logger.info(f'Métricas computadas com sucesso nos dados de teste em {round(delta_time, 3)} segundos')
+            logger.info(f'Sucesfully computed metrics using validation data for {model_name} on {round(delta_time, 3)} seconds')
 
             return pd.DataFrame(test_performance, index=test_performance.keys()).reset_index(drop=True).loc[:0, :]
 
         except Exception as e:
-            logger.error(f'Erro ao computar as métricas. Exception lançada: {e}')
+            logger.error(f'Error on computing metrics. Exception: {e}')
 
-    def evaluate_performance(self, X_train, y_train, X_test, y_test, cv=5, **kwargs):
+    def evaluate_performance(self, X_train, y_train, X_val, y_val, cv=5, **kwargs):
         """
-        Método responsável por executar e retornar métricas dos classificadores em treino (média do resultado
-        da validação cruzada com cv K-fols) e teste
+        Executes and computes classification metrics for training and validation data
         
-        Parâmetros
+        Parameters
         ----------
-        :param X_train: conjunto de features do modelo contido nos dados de treino [type: np.array]
-        :param y_train: array contendo a variável resposta dos dados de treino do modelo [type: np.array]
-        :param X_test: conjunto de features do modelo contido nos dados de teste [type: np.array]
-        :param y_test: array contendo a variável resposta dos dados de teste do modelo [type: np.array]
-        :param cv: K-folds utiliados na validação cruzada [type: int, default: 5]
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/metrics']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='metrics.csv']
+        :param X_train: model features for training data [type: np.array]
+        :param y_train: target array for training data [type: np.array]
+        :param X_val: model features for validation data [type: np.array]
+        :param y_val: target array for validation data [type: np.array]
+        :param cv: K-folds used on cross validation step [type: int, default=5]
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/metrics']
+            :arg output_filename: name of csv file to be saved [type: string, default='metrics.csv']
         
-        Retorno
-        -------
-        :return df_performances: DataFrame contendo as métricas calculadas em treino e teste [type: pd.DataFrame]
+        Return
+        ------
+        :return df_performances: dataset with metrics obtained using training and validation data [type: pd.DataFrame]
 
-        Aplicação
+        Application
         -----------
-        # Treinando modelo e avaliando performance em treino e teste
-        trainer = ClassificadorBinario()
-        trainer.fit(estimator, X_train, X_test)
+        # Training model and evaluating performance on training and validation sets
+        trainer = BinaryClassifier()
+        trainer.fit(estimator, X_train, y_train)
 
-        # Definindo dicionário de controle do resultado
-        df_performance = trainer.evaluate_performance(X_train, y_train, X_test, y_test, save=True, output_path=caminho)
+        # Generating a performance dataset
+        df_performance = trainer.evaluate_performance(X_train, y_train, X_val, y_val)
         """
 
-        # DataFrame vazio para armazenamento das métrics
+        # Creating an empty DataFrame for storing metrics
         df_performances = pd.DataFrame({})
 
-        # Iterando sobre todos os classificadores da classe
+        # Iterating over the trained classifiers on the class attribute dictionary
         for model_name, model_info in self.classifiers_info.items():
 
-            # Validando se o modelo já foi treinado (dicionário model_info já terá a chave 'train_performance')
+            # Verifying if the model was already trained (model_info dict will have the key 'train_performance')
             if 'train_performance' in model_info.keys():
                 df_performances = df_performances.append(model_info['train_performance'])
-                df_performances = df_performances.append(model_info['test_performance'])
+                df_performances = df_performances.append(model_info['val_performance'])
                 continue
 
-            # Retornando modelo a ser avaliado
+            # Returning the model to be evaluated
             try:
                 estimator = model_info['estimator']
             except KeyError as e:
-                logger.error(f'Erro ao retornar a chave "estimator" do dicionário model_info. Modelo {model_name} não treinado')
+                logger.error(f'Error on returning the key "estimator" from model_info dict. Model {model_name} was not trained')
                 continue
 
-            # Computando performance em treino e em teste
+            # Computing performance on training and validation sets
             train_performance = self.compute_train_performance(model_name, estimator, X_train, y_train, cv=cv)
-            test_performance = self.compute_test_performance(model_name, estimator, X_test, y_test)
+            val_performance = self.compute_val_performance(model_name, estimator, X_val, y_val)
 
-            # Adicionando os resultados ao atributo classifiers_info
+            # Setting up results on classifiers_info class dict
             self.classifiers_info[model_name]['train_performance'] = train_performance
-            self.classifiers_info[model_name]['test_performance'] = test_performance
+            self.classifiers_info[model_name]['val_performance'] = val_performance
 
-            # Construindo DataFrame com as métricas retornadas
-            model_performance = train_performance.append(test_performance)
+            # Building a DataFrame with model metrics
+            model_performance = train_performance.append(val_performance)
             df_performances = df_performances.append(model_performance)
             df_performances['anomesdia_datetime'] = datetime.now()
 
-            # Salvando alguns atributos no dicionário classifiers_info para acessos futuros
+            # Saving some attributes on classifiers_info for maybe retrieving in the future
             model_data = {
                 'X_train': X_train,
                 'y_train': y_train,
-                'X_test': X_test,
-                'y_test': y_test
+                'X_val': X_val,
+                'y_val': y_val
             }
             model_info['model_data'] = model_data
 
-        # Validando salvamento dos resultados
+        # Saving results if applicable
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/metrics')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'metrics.csv'
@@ -672,41 +665,51 @@ class ClassificadorBinario:
 
     def feature_importance(self, features, top_n=-1, **kwargs):
         """
-        Método responsável por retornar a importância das features de um modelo treinado
+        Extracts the feature importance method from trained models
         
-        Parâmetros
+        Parameters
         ----------
-        :param features: lista contendo as features de um modelo [type: list]
-        :param top_n: parâmetro para filtragem das top n features [type: int, default=-1]
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/metrics']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='top_features.csv']
+        :param features: list of features considered on training step [type: list]
+        :param top_n: parameter for filtering just top N features most important [type: int, default=-1]
+            *obs: when this parameter is equal to -1, all features are considered
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/metrics']
+            :arg output_filename: name of csv file to be saved [type: string, default='top_features.csv']
 
-        Retorno
-        -------
+        Return
+        ------
         :return: all_feat_imp: pandas DataFrame com a análise de feature importance dos modelos [type: pd.DataFrame]
+
+        Application
+        -----------
+        # Training models
+        trainer = BinaryClassifier()
+        trainer.fit(estimator, X_train, y_train)
+
+        # Returning a feature importance dataset for all models at once
+        feat_imp = trainer.feature_importance(features=MODEL_FEATURES, top_n=20)
         """
 
-        # Inicializando DataFrame vazio para armazenamento das feature importance
+        # Creating an empty DataFrame for storing feature importance analysis
         feat_imp = pd.DataFrame({})
         all_feat_imp = pd.DataFrame({})
 
-        # Iterando sobre os modelos presentes na classe
+        # Iterating over models in the class
         for model_name, model_info in self.classifiers_info.items():
-            # Validando possibilidade de extrair a importância das features do modelo
-            logger.debug(f'Extraindo importância das features para o modelo {model_name}')
-
+            
+            # Extracting feature importance from models
+            logger.debug(f'Extracting feature importances from the model {model_name}')
             try:
                 importances = model_info['estimator'].feature_importances_
             except KeyError as ke:
-                logger.error(f'Modelo {model_name} não treinado, sendo impossível extrair o método feature_importances_')
+                logger.warning(f'Model {model_name} was not trained yet, so it is impossible use the method feature_importances_')
                 continue
             except AttributeError as ae:
-                logger.error(f'Modelo {model_name} não possui o método feature_importances_')
+                logger.warning(f'Model {model_name} do not have feature_importances_ method')
                 continue
 
-            # Preparando o dataset para armazenamento das informações
+            # Preparing dataset for storing the info
             feat_imp['feature'] = features
             feat_imp['importance'] = importances
             feat_imp['model'] = model_name
@@ -714,12 +717,12 @@ class ClassificadorBinario:
             feat_imp.sort_values(by='importance', ascending=False, inplace=True)
             feat_imp = feat_imp.loc[:, ['model', 'feature', 'importance', 'anomesdia_datetime']]
 
-            # Salvando essa informação no dicionário classifiers_info
+            # Saving feature importance info on class attribute dictionary classifiers_info
             self.classifiers_info[model_name]['feature_importances'] = feat_imp
             all_feat_imp = all_feat_imp.append(feat_imp)
-            logger.info(f'Extração da importância das features concluída com sucesso para o modelo {model_name}')
+            logger.info(f'Feature importances extracted succesfully for the model {model_name}')
 
-        # Validando salvamento dos resultados
+        # Saving results if applicable
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/metrics')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'top_features.csv'
@@ -727,56 +730,57 @@ class ClassificadorBinario:
         
         return all_feat_imp
 
-    def training_flow(self, set_classifiers, X_train, y_train, X_test, y_test, features, **kwargs):
+    def training_flow(self, set_classifiers, X_train, y_train, X_val, y_val, features, **kwargs):
         """
-        Método responsável por consolidar um fluxo completo de treinamento dos classificadores, bem como
-        o levantamento de métricas e execução de métodos adicionais para escolha do melhor modelo
+        This method consolidates all the steps needed for trainign, evaluating and extracting useful
+        information for machine learning models given specific input arguments. When executed, this
+        method sequencially applies the fit(), evaluate_performance() and feature_importance() methods
+        of this given class, saving results if applicable.
+        
+        This is a good choice for doing all the things at once. The tradeoff is that it's important to
+        input a set of parameters needed for all individual methods.
 
-        Parâmetros
+        Parameters
         ----------
-        :param set_classifiers: dicionário contendo informações dos modelos a serem treinados [type: dict]
+        :param set_classifiers: contains the setup for training the models [type: dict]
             set_classifiers = {
                 'model_name': {
                     'model': __estimator__,
                     'params': __estimator_params__
                 }
             }
-        :param X_train: conjunto de features do modelo contido nos dados de treino [type: np.array]
-        :param y_train: array contendo a variável resposta dos dados de treino do modelo [type: np.array]
-        :param X_test: conjunto de features do modelo contido nos dados de teste [type: np.array]
-        :param y_test: array contendo a variável resposta dos dados de teste do modelo [type: np.array]
-        :param features: lista contendo as features de um modelo [type: list]
-        :param output_path: caminho onde o arquivo de resultados será salvo: [type: string, default=os.path.join(os.path.getcwd(), 'output/')]
-        :param **kwargs: argumentos adicionais do método
-            :arg approach: indicativo de sufixo para armazenamento no atributo classifiers_info [type: string, default: '']
-            :arg random_search: flag para aplicação do RandomizedSearchCV [type: bool, default: False]
-            :arg scoring: métrica a ser otimizada pelo RandomizedSearchCV [type: string, default: 'accuracy']
-            :arg cv: K-folds utiliados na validação cruzada [type: int, default: 5]
-            :arg verbose: nível de verbosity da busca aleatória [type: int, default: 5]
-            :arg n_jobs: quantidade de jobs aplicados durante a busca dos hiperparâmetros [type: int, default: -1]
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg models_output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/models']
-            :arg metrics_output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/metrics']
-            :arg metrics_output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='metrics.csv']
-            :arg featimp_output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='top_features.csv']
-            :arg top_n_featimp: top features a serem analisadas na importância das features [type: int, default=-1]
+        :param X_train: features for training data [type: np.array]
+        :param y_train: target array for training data [type: np.array]
+        :param X_val: model features for validation data [type: np.array]
+        :param y_val: target array for validation data [type: np.array]
+        :param features: list of features considered on training step [type: list]
+        :param **kwargs: additional parameters
+            :arg approach: sufix string for identifying a different approach for models training [type: string, default='']
+            :arg random_search: boolean flag for applying RandomizedSearchCV on training [type: bool, default=False]
+            :arg scoring: optimization metric for RandomizedSearchCV (if applicable) [type: string, default='accuracy']
+            :arg cv: K-folds used on cross validation evaluation [type: int, default=5]
+            :arg verbose: verbosity configured on hyperparameters search [type: int, default=-1]
+            :arg n_jobs: CPUs vcores to be used during hyperparameters search [type: int, default=-1]
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg models_output_path: path for saving model pkl files [type: string, default=cwd() + 'output/models']
+            :arg metrics_output_path: path for saving performance metrics dataset [type: string, default=cwd() + 'output/metrics']
+            :arg metrics_output_filename: filename for metrics dataset csv file to be saved [type: string, default='metrics.csv']
+            :arg featimp_output_filename: filename for feature importance csv file to be saved [type: string, default='top_features.csv']
+            :arg top_n_featimp: :param top_n: parameter for filtering just top N features most important [type: int, default=-1]
+                *obs: when this parameter is equal to -1, all features are considered
 
-        Retorno
-        -------
-        None
+        Return
+        ------
+        This method don't return anything but the complete training and evaluating flow
 
-        Aplicação
-        ---------
-        # Instanciando objeto
+        Application
+        -----------
+        # Initializing object and executing training steps through the method
         trainer = ClassificadorBinario()
-        trainer.training_flow(set_classifiers, X_train, y_train, X_test, y_test, features)
+        trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, features)
         """
 
-        # Definindo variáveis padrão para retorno dos resultados
-        """if not os.path.isdir(output_path):
-            os.makedirs(output_path)"""
-
-        # Extraindo parâmetros kwargs
+        # Extracting additional parameters from kwargs dictionary
         approach = kwargs['approach'] if 'approach' in kwargs else ''
         random_search = kwargs['random_search'] if 'random_search' in kwargs else False
         scoring = kwargs['scoring'] if 'scoring' in kwargs else 'accuracy'
@@ -790,103 +794,113 @@ class ClassificadorBinario:
         featimp_output_filename = kwargs['featimp_output_filename'] if 'featimp_output_filename' in kwargs else 'top_features.csv'
         top_n_featimp = kwargs['top_n_featimp'] if 'top_n_featimp' in kwargs else -1
 
-        # Treinando classificadores
+        # Training models
         self.fit(set_classifiers, X_train, y_train, approach=approach, random_search=random_search, scoring=scoring,
                  cv=cv, verbose=verbose, n_jobs=n_jobs, save=save, output_path=models_output_path)
 
-        # Avaliando modelos
-        self.evaluate_performance(X_train, y_train, X_test, y_test, save=save, output_path=metrics_output_path, 
+        # Evaluating models
+        self.evaluate_performance(X_train, y_train, X_val, y_val, save=save, output_path=metrics_output_path, 
                                   output_filename=metrics_output_filename)
 
-        # Analisando features mais importantes
+        # Extracting feature importance from models
         self.feature_importance(features, top_n=top_n_featimp, save=save, output_path=metrics_output_path, 
                                 output_filename=featimp_output_filename)
 
     def plot_metrics(self, figsize=(16, 10), palette='rainbow', cv=5, **kwargs):
         """
-        Método responsável por plotar os resultados das métricas dos classificadores selecionados
+        Plots metrics results for all trained models using training and validation data
 
-        Parâmetros
-        ----------
-        :param figsize: dimensões da figura gerada para a plotagem [type: tuple, default=(16, 10)]
-        :param palette: paleta de cores do matplotlib [type: string, default='rainbow']
-        :param cv: K-folds utiliados na validação cruzada [type: int, default: 5]
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='metrics_comparison.png']
+        Parameter
+        ---------
+        :param figsize: figure size [type: tuple, default=(16, 10)]
+        :param palette: matplotlib colormap for the chart [type: string, default='rainbow']
+        :param cv: K-folds used on cross validation evaluation [type: int, default=5]
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/imgs']
+            :arg output_filename: name of csv file to be saved [type: string, default='metrics_comparison.png']
 
-        Retorno
-        -------
-        Este método não retorna nenhum parâmetro além da plotagem devidamente salva no diretório destino
+        Return
+        ------
+        This method don't return anything but the custom metrics chart
+
+        Application
+        -----------
+        # Training models
+        trainer = BinaryClassifier()
+        trainer.fit(estimator, X_train, y_train)
+
+        # Visualizing performance through a custom chart
+        trainer.plot_metrics()
         """
 
-        logger.debug(f'Iniciando plotagem gráfica das métricas dos classificadores')
+        # Initializing plot
+        logger.debug(f'Initializing plot for visual evaluation of classifiers')
         metrics = pd.DataFrame()
         for model_name, model_info in self.classifiers_info.items():
             
-            logger.debug(f'Retornando métricas via validação cruzada para o modelo {model_name}')
+            logger.debug(f'Returning metrics through cross validation for {model_name}')
             try:
-                # Retornando variáveis do classificador
+                # Returning classifier variables from classifiers_info class dict attribute
                 metrics_tmp = pd.DataFrame()
                 estimator = model_info['estimator']
                 X_train = model_info['model_data']['X_train']
                 y_train = model_info['model_data']['y_train']
 
-                # Métricas não computadas
+                # Computing metrics using cross validation
                 accuracy = cross_val_score(estimator, X_train, y_train, cv=cv, scoring='accuracy')
                 precision = cross_val_score(estimator, X_train, y_train, cv=cv, scoring='precision')
                 recall = cross_val_score(estimator, X_train, y_train, cv=cv, scoring='recall')
                 f1 = cross_val_score(estimator, X_train, y_train, cv=cv, scoring='f1')
 
-                # Adicionando ao DataFrame recém criado
+                # Adding up into the empty DataFrame metrics
                 metrics_tmp['accuracy'] = accuracy
                 metrics_tmp['precision'] = precision
                 metrics_tmp['recall'] = recall
                 metrics_tmp['f1'] = f1
                 metrics_tmp['model'] = model_name
 
-                # Empilhando métricas
+                # Appending metrics for each model
                 metrics = metrics.append(metrics_tmp)
             except Exception as e:
-                logger.error(f'Erro ao retornar as métricas para o modelo {model_name}. Exception lançada: {e}')
+                logger.warning(f'Error on returning metrics for {model_name}. Exception: {e}')
                 continue
         
-        logger.debug(f'Modificando DataFrame de métricas para plotagem gráfica')
+        logger.debug(f'Transforming metrics DataFrame for applying a visual plot')
         try:
-            # Pivotando métricas (boxplot)
+            # Pivotting metrics (boxplot)
             index_cols = ['model']
             metrics_cols = ['accuracy', 'precision', 'recall', 'f1']
             df_metrics = pd.melt(metrics, id_vars=index_cols, value_vars=metrics_cols)
 
-            # Agrupando métricas (barras)
+            # Grouping metrics (bars)
             metrics_group = df_metrics.groupby(by=['model', 'variable'], as_index=False).mean()
         except Exception as e:
-            logger.error(f'Erro ao pivotar DataFrame. Exception lançada: {e}')
+            logger.error(f'Error on trying to pivot the DataFrame. Exception: {e}')
             return
 
-        logger.debug(f'Plotando análise gráfica das métricas para os modelos treinados')
+        logger.debug(f'Visualizing metrics for trained models')
         try:
-            # Plotando gráficos
+            # Plotting charts
             fig, axs = plt.subplots(nrows=2, ncols=1, figsize=figsize)
             sns.boxplot(x='variable', y='value', data=df_metrics.sort_values(by='model'), hue='model', ax=axs[0], palette=palette)
             sns.barplot(x='variable', y='value', data=metrics_group, hue='model', ax=axs[1], palette=palette, order=metrics_cols)
 
-            # Customizando eixos
-            axs[0].set_title(f'Dispersão das métricas utilizando validação cruzada nos dados de treino com {cv} K-folds', size=14, pad=15)
-            axs[1].set_title(f'Média para cada métrica obtida na validação cruzada', size=14, pad=15)
+            # Customizing axis
+            axs[0].set_title(f'Metrics distribution using cross validation on training data with {cv} K-folds', size=14, pad=15)
+            axs[1].set_title(f'Average of each metric obtained on cross validation', size=14, pad=15)
             format_spines(axs[0], right_border=False)
             format_spines(axs[1], right_border=False)
             axs[1].get_legend().set_visible(False)
             AnnotateBars(n_dec=3, color='black', font_size=12).vertical(axs[1])
         except Exception as e:
-            logger.error(f'Erro ao plotar gráfico das métricas. Exception lançada: {e}')
+            logger.error(f'Error when plotting charts for metrics. Exception: {e}')
             return
 
-        # Alinhando figura
+        # Tighting layout
         plt.tight_layout()
 
-        # Salvando figura
+        # Saving figure if applicable
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'metrics_comparison.png'
@@ -894,21 +908,31 @@ class ClassificadorBinario:
 
     def plot_feature_importance(self, features, top_n=20, palette='viridis', **kwargs):
         """
-        Método responsável por realizar uma plotagem gráfica das variáveis mais importantes pro modelo
+        Plots a chart for visualizing features most important for each trained model on the class
 
-        Parâmetros
+        Parameters
         ----------
-        :param features: lista de features do conjunto de dados [type: list]
-        :param top_n: quantidade de features a ser considerada na plotagem [type: int, default=20]
-        :param palette: paleta de cores utilizazda na plotagem [type: string, default='viridis']
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='feature_importances.png']
+        :param features: list of features considered on training step [type: list]
+        :param top_n: parameter for filtering just top N features most important [type: int, default=20]
+            *obs: when this parameter is equal to -1, all features are considered
+        :param palette: matplotlib colormap for the chart [type: string, default='viridis']
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/imgs']
+            :arg output_filename: name of png file to be saved [type: string, default='feature_importances.png']
 
-        Retorno
-        -------
-        Este método não retorna nada além da imagem devidamente salva no diretório destino
+        Return
+        ------
+        This method don't return anything but the custom chart for feature importances analysis
+
+        Application
+        -----------
+        # Training models
+        trainer = BinaryClassifier()
+        trainer.fit(estimator, X_train, y_train)
+
+        # Visualizing performance through a custom chart
+        trainer.plot_feature_importance()
         """
 
         # Definindo parâmetros de plotagem
@@ -971,41 +995,43 @@ class ClassificadorBinario:
 
     def custom_confusion_matrix(self, model_name, y_true, y_pred, classes, cmap, normalize=False):
         """
-        Método utilizada para plotar uma matriz de confusão customizada para um único modelo da classe. Em geral,
-        esse método pode ser chamado por um método de camada superior para plotagem de matrizes para todos os
-        modelos presentes na classe
+        Plots a custom confusion matrix for only one model. In practive this method is called in a top layer
+        through another method that iterates over all trained models on the class. This was a good way for
+        keep the organization on the class by centralizing all confusion matrix char modifications in
+        one specific method
 
-        Parâmetros
+        Parameters
         ----------
-        :param model_name: chave identificadora do modelo contida no atributo self.classifiers_info [type: string]
-        :param y_true: array contendo a variável target do dataset [type: np.array]
-        :param y_pred: array com as predições retornadas pelo respectivo modelo [type: np.array]
-        :param classes: nomenclatura das classes da matriz [type: list]
-        :param cmap: colormap para a matriz gerada [type: matplotlib.colormap]
-        :param normalize: flag para normalizar as entradas da matriz [type: bool, default=False]
+        :param model_name: model key on self.classifiers_info class attribute [type: string]
+        :param y_true: target array for source data [type: np.array]
+        :param y_pred: predictions array generated by a predict method [type: np.array]
+        :param classes: name for classes to be put on the matrix [type: list]
+        :param cmap: matplotlib colormap for the matrix chart [type: matplotlib.colormap]
+        :param normalize: flag for normalizing cells on the matrix [type: bool, default=False]
 
-        Retorno
+        Return
         -------
-        Este método não retorna nenhuma variável, além da plotagem da matriz especificada
+        This method don't return anything but the customization of confusion matrix
 
-        Aplicação
+        Application
         -----------
-        Visualizar o método self.plot_confusion_matrix()
+        This method is not usually executed by users outside the class.
+        Please take a look at the self.plot_confusion_matrix() method.
         """
 
-        # Retornando a matriz de confusão usando função do sklearn
+        # Returning confusion matrix through the sklearn's function
         conf_mx = confusion_matrix(y_true, y_pred)
 
-        # Plotando matriz
+        # Plotting the matrix
         plt.imshow(conf_mx, interpolation='nearest', cmap=cmap)
         plt.colorbar()
         tick_marks = np.arange(len(classes))
 
-        # Customizando eixos
+        # Customizing axis
         plt.xticks(tick_marks, classes, rotation=45)
         plt.yticks(tick_marks, classes)
 
-        # Customizando entradas
+        # Customizing entries
         fmt = '.2f' if normalize else 'd'
         thresh = conf_mx.max() / 2.
         for i, j in itertools.product(range(conf_mx.shape[0]), range(conf_mx.shape[1])):
@@ -1018,81 +1044,81 @@ class ClassificadorBinario:
     
     def plot_confusion_matrix(self, cmap=plt.cm.Blues, normalize=False, **kwargs):
         """
-        Método responsável por plotar gráficos de matriz de confusão usando dados de treino e teste
-        para todos os modelos presentes no dicionárion de classificadores self.classifiers_info
+        Iterates over the dictionary of trained models and builds a custom conf matrix for each one
+        using training and validation data
 
-        Parâmetros
+        Parameters
         ----------
-        :param cmap: colormap para a matriz gerada [type: matplotlib.colormap]
-        :param normalize: flag para normalizar as entradas da matriz [type: bool, default=False]
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='confusion_matrix.png']
+        :param cmap: matplotlib colormap for the matrix chart [type: matplotlib.colormap, default=]
+        :param normalize: flag for normalizing cells on the matrix [type: bool, default=False]
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/imgs']
+            :arg output_filename: name of png file to be saved [type: string, default='confusion_matrix.png']
         
-        Retorno
-        -------
-        Este método não retorna nenhuma variável, além da plotagem da matriz especificada
+        Return
+        ------
+        This method don't return anything but the plot of custom confusion matrix for trained models
 
-        Aplicação
-        ---------
-        trainer = ClassificadorBinario()
-        trainer.training_flow(set_classifiers, X_train, y_train, X_test, y_test, features)
+        Application
+        -----------
+        trainer = BinaryClassifier()
+        trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, features)
         trainer.plot_confusion_matrix(output_path=OUTPUT_PATH)
         """
 
-        # Definindo parâmetros de plotagem
-        logger.debug('Inicializando plotagem da matriz de confusão para os modelos')
+        # Setting up parameters
+        logger.debug('Initializing confusion matrix plotting for the models')
         k = 1
         nrows = len(self.classifiers_info.keys())
         fig = plt.figure(figsize=(10, nrows * 4))
         sns.set(style='white', palette='muted', color_codes=True)
 
-        # Iterando sobre cada classificador da classe
+        # Iterating over each trained model on classifiers_info class attribute
         for model_name, model_info in self.classifiers_info.items():
-            logger.debug(f'Retornando dados de treino e teste para o modelo {model_name}')
+            logger.debug(f'Returning training and validation data for {model_name}')
             try:
-                # Retornando dados para cada modelo
+                # Returning data for the model
                 X_train = model_info['model_data']['X_train']
                 y_train = model_info['model_data']['y_train']
-                X_test = model_info['model_data']['X_test']
-                y_test = model_info['model_data']['y_test']
+                X_val = model_info['model_data']['X_val']
+                y_val = model_info['model_data']['y_val']
                 classes = np.unique(y_train)
             except Exception as e:
-                logger.error(f'Erro ao retornar dados para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error when returning data already saved for {model_name}. Exception: {e}')
                 continue
 
-            # Realizando predições em treino (cross validation) e teste
-            logger.debug(f'Realizando predições para os dados de treino e teste ({model_name})')
+            # Making predictions for training (cross validation) and validation data
+            logger.debug(f'Making predictions on training and validation data for {model_name}')
             try:
                 train_pred = cross_val_predict(model_info['estimator'], X_train, y_train, cv=5)
-                test_pred = model_info['estimator'].predict(X_test)
+                val_pred = model_info['estimator'].predict(X_val)
             except Exception as e:
-                logger.error(f'Erro ao realizar predições para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error on making predictions for {model_name}. Exception: {e}')
                 continue
 
-            logger.debug(f'Gerando matriz de confusão para o modelo {model_name}')
+            logger.debug(f'Creating a confusion matrix for {model_name}')
             try:
-                # Plotando matriz utilizando dados de treino
+                # Plotting the matrix using training data
                 plt.subplot(nrows, 2, k)
-                self.custom_confusion_matrix(model_name + ' Train', y_train, train_pred, classes=classes, cmap=cmap,
-                                            normalize=normalize)
+                self.custom_confusion_matrix(model_name + ' Train', y_train, train_pred, classes=classes, 
+                                             cmap=cmap, normalize=normalize)
                 k += 1
 
-                # Plotando matriz utilizando dados de teste
+                # Plotting the matrix using validation data
                 plt.subplot(nrows, 2, k)
-                self.custom_confusion_matrix(model_name + ' Test', y_test, test_pred, classes=classes, cmap=plt.cm.Greens,
-                                            normalize=normalize)
+                self.custom_confusion_matrix(model_name + ' Validation', y_val, val_pred, classes=classes, 
+                                             cmap=plt.cm.Greens, normalize=normalize)
                 k += 1
-                logger.info(f'Matriz de confusão gerada para o modelo {model_name}')
+                logger.info(f'Confusion matrix succesfully plotted for {model_name}')
             except Exception as e:
-                logger.error(f'Erro ao gerar a matriz para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error when generating confusion matrix for {model_name}. Exception: {e}')
                 continue
 
-        # Alinhando figura
+        # Tighting layout
         plt.tight_layout()
 
-        # Salvando imagem
+        # Saving image if applicable
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'confusion_matrix.png'
@@ -1100,64 +1126,64 @@ class ClassificadorBinario:
 
     def plot_roc_curve(self, figsize=(16, 6), **kwargs):
         """
-        Método responsável por iterar sobre os classificadores presentes na classe e plotar a curva ROC
-        para treino (primeiro eixo) e teste (segundo eixo)
+        Plots a custom ROC Curve for each trained model on dictionary class attribute
+        for training and validation data
 
-        Parâmetros
+        Parameters
         ----------
-        :param figsize: dimensões da figura de plotagem [type: tuple, default=(16, 6)]
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='roc_curve.png']
+        :param figsize: figure size [type: tuple, default=(16, 6)]
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/imgs']
+            :arg output_filename: name of png file to be saved [type: string, default='roc_curve.png']
 
-        Retorno
-        -------
-        Este método não retorna nenhuma variável, além da plotagem da curva ROC especificada
+        Return
+        ------
+        This method don't return anything but a custom chart for the ROC Curve
 
-        Aplicação
-        ---------
-        trainer = ClassificadorBinario()
-        trainer.training_flow(set_classifiers, X_train, y_train, X_test, y_test, features)
+        Application
+        -----------
+        trainer = BinaryClassifier()
+        trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, features)
         trainer.plot_roc_curve(output_path=OUTPUT_PATH)
         """
 
-        # Criando figura de plotagem
-        logger.debug('Inicializando plotagem da curva ROC para os modelos')
+        # Creating figure
+        logger.debug('Initializing a ROC Curve analysis for trained models')
         fig, axs = plt.subplots(ncols=2, figsize=figsize)
 
-        # Iterando sobre os classificadores presentes na classe
+        # Iterating over trained models on class attribute
         for model_name, model_info in self.classifiers_info.items():
 
-            logger.debug(f'Retornando labels e scores de treino e de teste para o modelo {model_name}')
+            logger.debug(f'Returning labels and training and validation scores for {model_name}')
             try:
-                # Retornando label de treino e de teste
+                # Returning labels for training and validation
                 y_train = model_info['model_data']['y_train']
-                y_test = model_info['model_data']['y_test']
+                y_val = model_info['model_data']['y_val']
 
-                # Retornando scores já calculados no método de avaliação de performance
+                # Returning scores already computed on performance evaluation method
                 train_scores = model_info['train_scores']
-                test_scores = model_info['test_scores']
+                val_scores = model_info['val_scores']
             except Exception as e:
-                logger.error(f'Erro ao retornar os parâmetros para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error on returning parameters for {model_name}. Exception: {e}')
                 continue
 
-            logger.debug(f'Calculando FPR, TPR e AUC de treino e teste para o modelo {model_name}')
+            logger.debug(f'Computing FPR, TPR and AUC on training and validation for {model_name}')
             try:
-                # Calculando taxas de falsos positivos e verdadeiros positivos
+                # Computing false positive rate and true positive rate
                 train_fpr, train_tpr, train_thresholds = roc_curve(y_train, train_scores)
-                test_fpr, test_tpr, test_thresholds = roc_curve(y_test, test_scores)
+                test_fpr, test_tpr, test_thresholds = roc_curve(y_val, val_scores)
 
-                # Retornando AUC de treino e teste já calculada no método de avaliação de performance
+                # Returning AUC already computed on performance evaluation method
                 train_auc = model_info['train_performance']['auc'].values[0]
-                test_auc = model_info['test_performance']['auc'].values[0]
+                test_auc = model_info['val_performance']['auc'].values[0]
             except Exception as e:
-                logger.error(f'Erro ao calcular os parâmetros para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error when computing parameters for {model_name}. Exception: {e}')
                 continue
 
-            logger.debug(f'Plotando curva ROC de treino e teste para o modelo {model_name}')
+            logger.debug(f'Plotting the ROC Curves for {model_name}')
             try:
-                # Plotando curva ROC (treino)
+                # Plotting ROC Curve (training)
                 plt.subplot(1, 2, 1)
                 plt.plot(train_fpr, train_tpr, linewidth=2, label=f'{model_name} auc={train_auc}')
                 plt.plot([0, 1], [0, 1], 'k--')
@@ -1167,23 +1193,23 @@ class ClassificadorBinario:
                 plt.title(f'ROC Curve - Train Data')
                 plt.legend()
 
-                # Plotando curva ROC (teste)
+                # Plotting ROC Curve (training)
                 plt.subplot(1, 2, 2)
                 plt.plot(test_fpr, test_tpr, linewidth=2, label=f'{model_name} auc={test_auc}')
                 plt.plot([0, 1], [0, 1], 'k--')
                 plt.axis([-0.02, 1.02, -0.02, 1.02])
                 plt.xlabel('False Positive Rate')
                 plt.ylabel('True Positive Rate')
-                plt.title(f'ROC Curve - Test Data', size=12)
+                plt.title(f'ROC Curve - Validation Data', size=12)
                 plt.legend()
             except Exception as e:
-                logger.error(f'Erro ao plotar curva ROC para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error on plotting ROC Curve for {model_name}. Exception: {e}')
                 continue
 
-        # Alinhando figura
+        # Tighting laout
         plt.tight_layout()
 
-        # Salvando imagem
+        # Saving image if applicable
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'roc_curve.png'
@@ -1191,77 +1217,78 @@ class ClassificadorBinario:
     
     def plot_score_distribution(self, shade=True, **kwargs):
         """
-        Método responsável por plotar gráficos de distribuição de score (kdeplot) para os
-        dados de treino e teste separados pela classe target
+        Plots useful charts for analysing the score distribution of a model through a kdeplot.
+        When executed, this method builds up two charts: one for training and another for validation
+        where each one is given by two curves for each target class
         
-        Parâmetros
+        Parameters
         ----------
-        :param shade: flag indicativo de preenchimento da área sob a curva [type: bool, default=True]
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='score_distribution.png']
+        :param shade: flag for filling down the area under the distribution curve [type: bool, default=True]
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/imgs']
+            :arg output_filename: name of png file to be saved [type: string, default='score_distribution.png']
 
-        Retorno
-        -------
-        Este método não retorna nenhum parâmetro além do salvamento do gráfico de distribuição especificado
+        Return
+        ------
+        This method don't return anything but the score distribution plot
         
-        Aplicação
-        ---------
-        trainer = ClassificadorBinario()
-        trainer.training_flow(set_classifiers, X_train, y_train, X_test, y_test, features)
+        Application
+        -----------
+        trainer = BinaryClassifier()
+        trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, features)
         trainer.plot_score_distribution(output_path=OUTPUT_PATH)
         """
 
-        # Criando figura de plotagem
-        logger.debug('Inicializando plotagem da distribuição de score para os modelos')
+        # Creating figure
+        logger.debug('Initializing distribution score analysis for the models')
         i = 0
         nrows = len(self.classifiers_info.keys())
         fig, axs = plt.subplots(nrows=nrows, ncols=2, figsize=(16, nrows * 4))
         sns.set(style='white', palette='muted', color_codes=True)
 
-        # Iterando sobre os classificadores presentes na classe
+        # Iterating over trained classifiers on the class attribute
         for model_name, model_info in self.classifiers_info.items():
 
-            logger.debug(f'Retornando labels e scores de treino e de teste para o modelo {model_name}')
+            logger.debug(f'Returning labels and trainind and validation score for {model_name}')
             try:
-                # Retornando label de treino e de teste
+                # Returning training and validation target labels label de treino e de teste
                 y_train = model_info['model_data']['y_train']
-                y_test = model_info['model_data']['y_test']
+                y_val = model_info['model_data']['y_val']
 
-                # Retornando scores já calculados no método de avaliação de performance
+                # Returning scores that were already computed on evaluate_performance() method
                 train_scores = model_info['train_scores']
-                test_scores = model_info['test_scores']
+                test_scores = model_info['val_scores']
             except Exception as e:
-                logger.error(f'Erro ao retornar os parâmetros para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error on returning parameters for {model_name}. Exception: {e}')
                 continue
 
-            logger.debug(f'Plotando distribuição de score de treino e teste para o modelo {model_name}')
+            logger.debug(f'Plotting the score distribution chart for {model_name}')
             try:
-                # Distribuição de score pros dados de treino
+                # Building distribution chart for training data
                 sns.kdeplot(train_scores[y_train == 1], ax=axs[i, 0], label='y=1', shade=shade, color='crimson')
                 sns.kdeplot(train_scores[y_train == 0], ax=axs[i, 0], label='y=0', shade=shade, color='darkslateblue')
-                axs[i, 0].set_title(f'Distribuição de Score - {model_name} - Treino')
+                axs[i, 0].set_title(f'Score Distribution for {model_name} - Training')
                 axs[i, 0].legend()
                 axs[i, 0].set_xlabel('Score')
                 format_spines(axs[i, 0], right_border=False)
 
-                # Distribuição de score pros dados de teste
-                sns.kdeplot(test_scores[y_test == 1], ax=axs[i, 1], label='y=1', shade=shade, color='crimson')
-                sns.kdeplot(test_scores[y_test == 0], ax=axs[i, 1], label='y=0', shade=shade, color='darkslateblue')
-                axs[i, 1].set_title(f'Distribuição de Score - {model_name} - Teste')
+                # Building distribution chart for validation data
+                sns.kdeplot(test_scores[y_val == 1], ax=axs[i, 1], label='y=1', shade=shade, color='crimson')
+                sns.kdeplot(test_scores[y_val == 0], ax=axs[i, 1], label='y=0', shade=shade, color='darkslateblue')
+                axs[i, 1].set_title(f'Score Distribution for {model_name} - Validation')
                 axs[i, 1].legend()
                 axs[i, 1].set_xlabel('Score')
                 format_spines(axs[i, 1], right_border=False)
                 i += 1
             except Exception as e:
-                logger.error(f'Erro ao plotar a curva para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error on returning curve for {model_name}. Exception: {e}')
                 continue
 
-        # Alinhando figura
+        # Tighting layout
         plt.tight_layout()
 
-        # Salvando imagem
+        # Saving image if applicable
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'score_distribution.png'
@@ -1269,41 +1296,41 @@ class ClassificadorBinario:
 
     def plot_score_bins(self, bin_range=.20, **kwargs):
         """
-        Método responsável por realizar a plotagem da distribuição de scores em faixas específicas
+        Plots a distribution score analysis splitted on categorical bins.
 
-        Parâmetros
+        Parameters
         ----------
-        :param bin_range: intervalo de separação das faixas de score [type: float, default=.25]
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='score_bins.png']
+        :param bin_range: range for score bins [type: float, default=.20]
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/imgs']
+            :arg output_filename: name of png file to be saved [type: string, default='score_bins.png']
 
-        Retorno
-        -------
-        Este método não retorna nenhum parâmetro além do salvamento do gráfico de distribuição especificado
+        Return
+        ------
+        This method don't return anything but a custom chart or visualizing scores at different bins
         
-        Aplicação
-        ---------
-        trainer = ClassificadorBinario()
-        trainer.training_flow(set_classifiers, X_train, y_train, X_test, y_test, features)
+        Application
+        -----------
+        trainer = BinaryClassifier()
+        trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, features)
         trainer.plot_score_distribution(output_path=OUTPUT_PATH)
         """
 
-        logger.debug('Inicializando plotagem de distribuição de score em faixas para os modelos')
+        logger.debug('Initializing score analysis on categorical bins for trained models')
         i = 0
         nrows = len(self.classifiers_info.keys())
         fig1, axs1 = plt.subplots(nrows=nrows, ncols=2, figsize=(16, nrows * 4))
         fig2, axs2 = plt.subplots(nrows=nrows, ncols=2, figsize=(16, nrows * 4))
 
-        # Retornando parâmetros de faixas
+        # Creating a list of bins
         bins = np.arange(0, 1.01, bin_range)
         bins_labels = [str(round(list(bins)[i - 1], 2)) + ' a ' + str(round(list(bins)[i], 2)) for i in range(len(bins)) if i > 0]
 
-        # Iterando sobre os classificadores da classe
+        # Iterating ver trained models on class attribute
         for model_name, model_info in self.classifiers_info.items():
 
-            logger.debug(f'Calculando parâmetros de plotagem para o modelo {model_name}')
+            logger.debug(f'Returning parameters for {model_name}')
             try:
                 # Retrieving the train scores and creating a DataFrame
                 train_scores = model_info['train_scores']
@@ -1317,52 +1344,52 @@ class ClassificadorBinario:
                 df_train_rate = pd.crosstab(df_train_scores['faixa'], df_train_scores['target'])
                 df_train_percent = df_train_rate.div(df_train_rate.sum(1).astype(float), axis=0)
 
-                # Retrieving the test scores and creating a DataFrame
-                test_scores = model_info['test_scores']
-                y_test = model_info['model_data']['y_test']
-                df_test_scores = pd.DataFrame({})
-                df_test_scores['scores'] = test_scores
-                df_test_scores['target'] = y_test
-                df_test_scores['faixa'] = pd.cut(test_scores, bins, labels=bins_labels)
+                # Retrieving val scores and creating a DataFrame
+                val_scores = model_info['val_scores']
+                y_val = model_info['model_data']['y_val']
+                df_val_scores = pd.DataFrame({})
+                df_val_scores['scores'] = val_scores
+                df_val_scores['target'] = y_val
+                df_val_scores['faixa'] = pd.cut(val_scores, bins, labels=bins_labels)
 
                 # Computing the distribution for each bin
-                df_test_rate = pd.crosstab(df_test_scores['faixa'], df_test_scores['target'])
-                df_test_percent = df_test_rate.div(df_test_rate.sum(1).astype(float), axis=0)
+                df_val_rate = pd.crosstab(df_val_scores['faixa'], df_val_scores['target'])
+                df_val_percent = df_val_rate.div(df_val_rate.sum(1).astype(float), axis=0)
             except Exception as e:
-                logger.error(f'Erro ao calcular parâmetros para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error on returning and computing parameters for {model_name}. Exception: {e}')
                 continue
 
-            logger.debug(f'Plotando distribuição do score em faixas para o modelo {model_name}')
+            logger.debug(f'Plotting score distribution on bins for {model_name}')
             try:
                 sns.countplot(x='faixa', data=df_train_scores, ax=axs1[i, 0], hue='target', palette=['darkslateblue', 'crimson'])
-                sns.countplot(x='faixa', data=df_test_scores, ax=axs1[i, 1], hue='target', palette=['darkslateblue', 'crimson'])
+                sns.countplot(x='faixa', data=df_val_scores, ax=axs1[i, 1], hue='target', palette=['darkslateblue', 'crimson'])
 
-                # Formatando legendas e títulos
+                # Formatting legend and titles
                 axs1[i, 0].legend(loc='upper right')
                 axs1[i, 1].legend(loc='upper right')
-                axs1[i, 0].set_title(f'Distribuição de Score em Faixas (Volume) - {model_name} - Treino', size=14)
-                axs1[i, 1].set_title(f'Distribuição de Score em Faixas (Volume) - {model_name} - Teste', size=14)
+                axs1[i, 0].set_title(f'Score Distribution on Bins for {model_name} - Training', size=14)
+                axs1[i, 1].set_title(f'Score Distribution on Bins for {model_name} - Validation', size=14)
 
-                # Adicionando rótulos
+                # Adding up data labels
                 AnnotateBars(n_dec=0, color='black', font_size=12).vertical(axs1[i, 0])
                 AnnotateBars(n_dec=0, color='black', font_size=12).vertical(axs1[i, 1])
 
-                # Formatando eixos
+                # Formatting axis
                 format_spines(axs1[i, 0], right_border=False)
                 format_spines(axs1[i, 1], right_border=False)
 
-                logger.debug(f'Plotando percentual de volumetria da faixa para o modelo {model_name}')
-                for df_percent, ax in zip([df_train_percent, df_test_percent], [axs2[i, 0], axs2[i, 1]]):
+                logger.debug(f'Plotting percentual analysis on bins for {model_name}')
+                for df_percent, ax in zip([df_train_percent, df_val_percent], [axs2[i, 0], axs2[i, 1]]):
                     df_percent.plot(kind='bar', ax=ax, stacked=True, color=['darkslateblue', 'crimson'], width=0.6)
 
                     for p in ax.patches:
-                        # Coletando parâmetros para inserção de rótulos
+                        # Colecting parameters for adding data labels
                         height = p.get_height()
                         width = p.get_width()
                         x = p.get_x()
                         y = p.get_y()
 
-                        # Formatando parâmetros
+                        # Formatting parameters
                         label_text = f'{round(100 * height, 1)}%'
                         label_x = x + width - 0.30
                         label_y = y + height / 2
@@ -1370,66 +1397,66 @@ class ClassificadorBinario:
                                 fontweight='bold', size=10)
                     format_spines(ax, right_border=False)
 
-                    # Formatando legendas e títulos
-                    axs2[i, 0].set_title(f'Distribuição do Score em Faixas (Percentual) - {model_name} - Treino')
-                    axs2[i, 1].set_title(f'Distribuição do Score em Faixas (Percentual) - {model_name} - Teste')
+                    # Formatting legend and title
+                    axs2[i, 0].set_title(f'Score Distribution on Bins (Percent) for {model_name} - Training', size=14)
+                    axs2[i, 1].set_title(f'Score Distribution on Bins (Percent) for {model_name} - Validation', size=14)
                 i += 1
 
             except Exception as e:
-                logger.error(f'Erro ao plotar gráfico para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error on plotting score distribution on bins for {model_name}. Exception: {e}')
                 continue
 
-        # Alinhando figura
+        # Tighting layout
         fig1.tight_layout()
         fig2.tight_layout()
 
-        # Salvando imagem
+        # Saving image
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             save_fig(fig1, output_path, img_name='score_bins.png')
             save_fig(fig2, output_path, img_name='score_bins_percent.png')        
 
-    def plot_learning_curve(self, ylim=None, cv=5, n_jobs=1, train_sizes=np.linspace(.1, 1.0, 10), **kwargs):
+    def plot_learning_curve(self, ylim=None, cv=5, n_jobs=3, train_sizes=np.linspace(.1, 1.0, 10), **kwargs):
         """
-        Método responsável por calcular a curva de aprendizado para um modelo treinado
+        Plots an excellent chart for analysing a learning curve for trained models.
         
-        Parâmetros
+        Parameters
         ----------
-        :param model_name: chave de referência para análise de um modelo já treinado[type: string]
-        :param figsize: dimensões da figura de plotagem [type: tuple, default=(16, 6)]
-        :param ylim: climite do eixo vertical [type: int, default=None]
-        :param cv: k-folds utilizados na validação cruzada para levantamento de informações [type: int, default=5]
-        :param n_jobs: número de processadores utilizado no levantamento das informações [type: int, default=1]
-        :param train_sizes: array de passos utilizados na curva [type: np.array, default=np.linspace(.1, 1.0, 10)]
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='confusion_matrix.png']
+        :param ylim: vertical axis limit [type: int, default=None]
+        :param cv: K-folds used on cross validation [type: int, default=5]
+        :param n_jobs: CPUs vcores for processing [type: int, default=3]
+        :param train_sizes: array with steps for measuring performance [type: np.array, default=np.linspace(.1, 1.0, 10)]
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/imgs']
+            :arg output_filename: name of png file to be saved [type: string, default='learning_curve.png']
 
-        Retorno
-        -------
-        Este método não retorna nenhum parâmetro além do salvamento do gráfico de distribuição especificado
+        Return
+        ------
+        This method don't return anything but the learning curve chart
 
-        Aplicação
+        Application
         -----------
-        trainer.plot_learning_curve(model_name='LightGBM')
+        trainer = BinaryClassifier()
+        trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, features)
+        trainer.plot_learning_curve()
         """
 
-        logger.debug(f'Inicializando plotagem da curvas de aprendizado dos modelos')
+        logger.debug(f'Initializing plots for learning curves for trained models')
         i = 0
         nrows = len(self.classifiers_info.keys())
         fig, axs = plt.subplots(nrows=nrows, figsize=(16, nrows * 6))
 
-        # Iterando sobre os classificadores presentes na classe
+        # Iterating over each model in class attribute
         for model_name, model_info in self.classifiers_info.items():
             ax = axs[i]
-            logger.debug(f'Retornando parâmetros pro modelo {model_name} e aplicando método learning_curve')
+            logger.debug(f'Returning parameters for {model_name} and applying learning_curve method')
             try:
                 model = model_info['estimator']
                 X_train = model_info['model_data']['X_train']
                 y_train = model_info['model_data']['y_train']
 
-                # Chamando função learning_curve para retornar os scores de treino e validação
+                # Calling learning_curve function for returning scores for training and validation
                 train_sizes, train_scores, val_scores = learning_curve(model, X_train, y_train, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
 
                 # Computando médias e desvio padrão (treino e validação)
@@ -1438,17 +1465,17 @@ class ClassificadorBinario:
                 val_scores_mean = np.mean(val_scores, axis=1)
                 val_scores_std = np.std(val_scores, axis=1)
             except Exception as e:
-                logger.error(f'Erro ao retornar parâmetros e scores pro modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error on returning parameters and applying learning curve for {model_name}. Exception: {e}')
                 continue
 
-            logger.debug(f'Plotando curvas de aprendizado de treino e validação para o modelo {model_name}')
+            logger.debug(f'Plotting learning curves for training and validation data for {model_name}')
             try:
-                # Resultados utilizando dados de treino
+                # Results on training data
                 ax.plot(train_sizes, train_scores_mean, 'o-', color='navy', label='Training Score')
                 ax.fill_between(train_sizes, (train_scores_mean - train_scores_std), (train_scores_mean + train_scores_std),
                                 alpha=0.1, color='blue')
 
-                # Resultados utilizando dados de validação (cross validation)
+                # Results on validation data
                 ax.plot(train_sizes, val_scores_mean, 'o-', color='red', label='Cross Val Score')
                 ax.fill_between(train_sizes, (val_scores_mean - val_scores_std), (val_scores_mean + val_scores_std),
                                 alpha=0.1, color='crimson')
@@ -1460,14 +1487,14 @@ class ClassificadorBinario:
                 ax.grid(True)
                 ax.legend(loc='best')
             except Exception as e:
-                logger.error(f'Erro ao plotar curva de aprendizado para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error on plotting learning curve for {model_name}. Exception: {e}')
                 continue
             i += 1
         
-        # Alinhando figura
+        # Tighting layout
         plt.tight_layout()
 
-        # Salvando imagem
+        # Saving image
         if 'save' in kwargs and bool(kwargs['save']):
             output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
             output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else 'learning_curve.png'
@@ -1475,202 +1502,219 @@ class ClassificadorBinario:
 
     def plot_shap_analysis(self, model_name, features, figsize=(16, 10), **kwargs):
         """
-        Método responsável por plotar a análise shap pras features em um determinado modelo
+        Plots an useful shap analysis for interpreting a specific model
         
-        Parâmetros
+        Parameters
         ----------
-        :param model_name: chave de um classificador específico já treinado na classe [type: string]
-        :param features: lista de features do dataset [type: list]
-        :param figsize: tamanho da figure de plotagem [type: tuple, default=(16, 10)]
-        :param **kwargs: argumentos adicionais do método
-            :arg save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-            :arg output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']
-            :arg output_filename: referência do nome do arquivo csv a ser salvo [type: string, default='confusion_matrix.png']
+        :param model_name: a key for extracting an estimator from classifier info dict class attribute [type: string]
+        :param features: list of features used on training the model [type: list]
+        :param figsize: figure size [type: tuple, default=(16, 10)]
+        :param **kwargs: additional parameters
+            :arg save: boolean flag for saving files on locak disk [type: bool, default=True]
+            :arg output_path: path for files to be saved [type: string, default=cwd() + 'output/imgs']
+            :arg output_filename: name of png file to be saved [type: string, default='learning_curve.png']
 
-        Retorno
-        -------
-        Este método não retorna nenhum parâmetro além da análise shap especificada
+        Return
+        ------
+        This method don't return anything but the plot of shap analysis (violin)
+
+        Application
+        -----------
+        trainer = BinaryClassifier()
+        trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, features)
+        trainer.plot_shap_analysis(model_name='LightGBM', features=MODEL_FEATURES)
         """
 
-        logger.debug(f'Explicando o modelo {model_name} através da análise shap')
+        logger.debug(f'Explaining {model_name} through a violin plot on shap analysis')
         try:
             model_info = self.classifiers_info[model_name]
             model = model_info['estimator']
         except Exception as e:
-            logger.error(f'Classificador {model_name} não existente ou não treinado. Opções possíveis: {list(self.classifiers_info.keys())}')
+            logger.error(f'Model key {model_name} not exists or model was not trained. Available options: {list(self.classifiers_info.keys())}')
             return
 
-        logger.debug(f'Retornando parâmetros da classe para o modelo {model_name}')
+        logger.debug(f'Returning paramteres for {model_name}')
         try:
-            # Retornando parâmetros do modelo
+            # Returning model parameters
             X_train = model_info['model_data']['X_train']
-            X_test = model_info['model_data']['X_test']
+            X_val = model_info['model_data']['X_val']
             df_train = pd.DataFrame(X_train, columns=features)
-            df_test = pd.DataFrame(X_train, columns=features)
+            df_val = pd.DataFrame(X_val, columns=features)
         except Exception as e:
-            logger.error(f'Erro ao retornar parâmetros para o modelo {model_name}. Exception lançada: {e}')
+            logger.error(f'Error on returning parameters for {model_name}. Exception: {e}')
 
-        logger.debug(f'Criando explainer e gerando valores shap para o modelo {model_name}')
+        logger.debug(f'Creating a explainer and generating shap values for {model_name}')
         try:
             explainer = shap.TreeExplainer(model, df_train)
-            shap_values = explainer.shap_values(df_test)
+            shap_values = explainer.shap_values(df_val)
         except Exception as e:
             try:
-                logger.warning(f'TreeExplainer não se encaixa no modelo {model_name}. Tentando LinearExplainer')
+                logger.warning(f'TreeExplainer does not fit on {model_name}. Trying LinearExplainer')
                 explainer = shap.LinearExplainer(model, df_train)
-                shap_values = explainer.shap_values(df_test, check_additivity=False)
+                shap_values = explainer.shap_values(df_val, check_additivity=False)
             except Exception as e:
-                logger.error(f'Não foi possível retornar os parâmetros para o modelo {model_name}. Exception lançada: {e}')
+                logger.error(f'Error on returning parameters for {model_name}. Exception: {e}')
                 return
 
-        logger.debug(f'Plotando análise shap para o modelo {model_name}')
+        logger.debug(f'Making a shap analysis violin plot for {model_name}')
         try:
             fig, ax = plt.subplots(figsize=figsize)
             try:
-                shap.summary_plot(shap_values, df_test, plot_type='violin', show=False)
+                shap.summary_plot(shap_values, df_val, plot_type='violin', show=False)
             except Exception as e:
-                shap.summary_plot(shap_values[1], df_test, plot_type='violin', show=False)
-            plt.title(f'Shap Analysis (violin) para o modelo {model_name}')
+                shap.summary_plot(shap_values[1], df_val, plot_type='violin', show=False)
+            plt.title(f'Shap Analysis (violin) for {model_name}')
             if 'save' in kwargs and bool(kwargs['save']):
                 output_path = kwargs['output_path'] if 'output_path' in kwargs else os.path.join(os.getcwd(), 'output/imgs')
                 output_filename = kwargs['output_filename'] if 'output_filename' in kwargs else f'shap_analysis_{model_name}.png'
                 save_fig(fig, output_path, img_name=output_filename)
         except Exception as e:
-            logger.error(f'Erro ao plotar análise shap para o modelo {model_name}. Exception lançada: {e}')
+            logger.error(f'Error on plotting shap analysis for {model_name}. Exception: {e}')
             return 
 
     def visual_analysis(self, features, metrics=True, feat_imp=True, cfmx=True, roc=True, score_dist=True, score_bins=True, 
                         learn_curve=True, model_shap=None, show=False, save=True, output_path=os.path.join(os.getcwd(), 'output/imgs')):
         """
-        Método responsável por consolidar análises gráficas no processo de modelagem
+        Makes a complete visual analysis for trained models by executing all individual graphic functions
+        squencially, passing arguments as needed
 
-        Parâmetros
+        Parameters
         ----------
-        :param features: lista de features do conjunto de dados [type: list]
-        :param metrics: flag inficativo da execução do método plot_metrics() [type: bool, default=True]
-        :param feat_imp: flag indicativo da execução da método plot_feature_importance() [type: bool, default=True]
-        :param cfmx: flag indicativo da execução da método plot_confusion_matrix() [type: bool, default=True]
-        :param roc: flag indicativo da execução da método plot_roc_curve() [type: bool, default=True]
-        :param score_dist: flag indicativo da execução da método plot_score_distribution() [type: bool, default=True]
-        :param score_bins: flag indicativo da execução da método plot_score_bins() [type: bool, default=True]
-        :param learn_curve: flag indicativo da execução da método plot_learning_curve() [type: bool, default=True]
-        :param model_shap: chave do modelo a ser utilizado na análise shap [type: string, default=None]
-        :param show: flag indicativo para mostragem das figuras em jupyter notebook [type: bool, default=False]
-        :param save: flag booleano para indicar o salvamento dos arquivos em disco [type: bool, default=True]
-        :param output_path: diretório para salvamento dos arquivos [type: string, default=cwd() + 'output/imgs']        
+        :param features: features list used on models training [type: list]
+        :param metrics: flag for executing plot_metrics() method [type: bool, default=True]
+        :param feat_imp: flag for executing plot_feature_importance() method [type: bool, default=True]
+        :param cfmx: flag for executing plot_confusion_matrix() method [type: bool, default=True]
+        :param roc: flag for executing plot_roc_curve() method [type: bool, default=True]
+        :param score_dist: flag for executing plot_score_distribution() method [type: bool, default=True]
+        :param score_bins: flag for executing plot_score_bins() method [type: bool, default=True]
+        :param learn_curve: flag for executing plot_learning_curve() method [type: bool, default=True]
+        :param model_shap: key string for selecting a model for applying shap analysis [type: string, default=None]
+        :param show: flag for showing up the figures on screen or jupyter notebook cel [type: bool, default=False]
+        :param save: flag for saving figures on local machine [type: bool, default=True]
+        :param output_path: path for saving files [type: string, default=cwd() + 'output/imgs']        
 
-        Retorno
-        -------
-        Este método não retorna nada além das imagens devidamente salvas no diretório destino
+        Return
+        ------
+        This method don't return anything but the generation of plots following arguments configuration
 
-        Aplicação
-        ---------
-        trainer = ClassificadorBinario()
-        trainer.fit(set_classifiers, X_train, y_train, X_test, y_test)        
+        Application
+        -----------
+        trainer = BinaryClassifier()
+        trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, features)
+        trainer.visual_analysis(features=MODEL_FEATURES)   
         """
 
-        # Verificando parâmetro para mostrar
+        # Verifying parameter for showing up figs
         backend_ = mpl.get_backend()
         if not show:
             mpl.use('Agg')
 
-        logger.debug(f'Inicializando análise gráfica nos modelos treinados')
+        logger.debug(f'Initializing visual analysis for trained models')
         try:
-            # Verificando plotagem das métricas
+            # Plotting metrics
             if metrics:
                 self.plot_metrics(save=save, output_path=output_path)
 
-            # Verificando plotagem de feature importance
+            # Plotting feature importances
             if feat_imp:
                 self.plot_feature_importance(features=features, save=save, output_path=output_path)
 
-            # Verificando plotagem de matriz de confusão
+            # Plotting confusion matrix
             if cfmx:
                 self.plot_confusion_matrix(save=save, output_path=output_path)
             
-            # Verificando plotagem de curva ROC
+            # Plotting ROC curve
             if roc:
                 self.plot_roc_curve(save=save, output_path=output_path)
 
-            # Verificando plotagem de distribuição dos scores
+            # Plotting score distribution
             if score_dist:
                 self.plot_score_distribution(save=save, output_path=output_path)
 
-            # Verificando plotagem de distribuição do score em faixa
+            # Plotting score distribution on bins
             if score_bins:
                 self.plot_score_bins(save=save, output_path=output_path)
 
-            # Verificando plotagem de curva de aprendizado
+            # Plotting learning curve
             if learn_curve:
                 self.plot_learning_curve(save=save, output_path=output_path)
 
+            # Plotting shap analysis
             if model_shap is not None:
                 self.plot_shap_analysis(save=save, model_name=model_shap, features=features, output_path=output_path)
 
         except Exception as e:
-            logger.error(f'Erro ao plotar análises gráficas. Exception lançada: {e}')
+            logger.error(f'Error on plotting visual analysis for models. Exception: {e}')
 
-        # Resetando configurações
+        # Reseting configuration
         mpl.use(backend_)
 
     def get_estimator(self, model_name):
         """
-        Método responsável por retornar o estimator de um modelo selecionado
+        Returns the estimator of a selected model
 
-        Parâmetros
+        Parameters
         ----------
-        :param model_name: chave identificadora do modelo no dicionário classifiers_info da classe [type: string]
+        :param model_name: key string for extracting the model from classifiers_info class attribute [type: string]
 
-        Retorno
-        -------
-        :return model: estimator do modelo já treinado
+        Return
+        ------
+        :return model: model estimator stored on class attribute [type: estimator]
+
+        Application
+        -----------
+        model = trainer.get_estimator(model_name='RandomForestClassifier')
         """
 
-        logger.debug(f'Retornando estimator do modelo {model_name} já treinado')
+        logger.debug(f'Returning estimator for model {model_name} stored on class attribute')
         try:
             model_info = self.classifiers_info[model_name]
             return model_info['estimator']
         except Exception as e:
-            logger.error(f'Classificador {model_name} não existente ou não treinado. Opções possíveis: {list(self.classifiers_info.keys())}')
+            logger.error(f'Key string {model_name} does not exists or was not trained. Options: {list(self.classifiers_info.keys())}')
             return
 
     def get_metrics(self, model_name):
         """
-        Método responsável por retornar as métricas obtidas no treinamento
+        Returns metrics computed for a specific model
 
-        Parâmetros
+        Parameters
         ----------
-        None
+        :param model_name: key string for extracting the model from classifiers_info class attribute [type: string]
 
-        Retorno
-        -------
-        :return model_performance: DataFrame contendo as métricas dos modelos treinados [type: pd.DataFrame]
+        Return
+        ------
+        :return metrics: metrics dataset for a specific model [type: DataFrame]
+
+        Application
+        -----------
+        metrics = trainer.get_metrics(model_name='RandomForestClassifier')
         """
 
-        logger.debug(f'Retornando as métricas do modelo {model_name}')
+        logger.debug(f'Returning metrics computed for {model_name}')
         try:
-            # Retornando dicionário do modelo e métricas já salvas
+            # Returning dictionary class attribute with stored information of model
             model_info = self.classifiers_info[model_name]
             train_performance = model_info['train_performance']
-            test_performance = model_info['test_performance']
-            model_performance = train_performance.append(test_performance)
+            val_performance = model_info['val_performance']
+            model_performance = train_performance.append(val_performance)
             model_performance.reset_index(drop=True, inplace=True)
 
             return model_performance
         except Exception as e:
-            logger.error(f'Erro ao retornar as métricas para o modelo {model_name}. Exception lançada: {e}')
+            logger.error(f'Error on returning metrics for {model_name}. Exception: {e}')
 
     def get_model_info(self, model_name):
         """
-        Método responsável por coletar as informações registradas de um determinado modelo da classe
+        Returns a complete dictionary with all information for models stored on class attribute
 
-        Parâmetros
+        Parameters
         ----------
-        :param model_name: chave identificadora do modelo no dicionário classifiers_info da classe [type: string]
+        :param model_name: key string for extracting the model from classifiers_info class attribute [type: string]
 
-        Retorno
-        -------
-        :return model_info: dicionário com informações registradas do modelo [type: dict]
+        Return
+        ------
+        :return model_info: dictionary with stored model's informations [type: dict]
             model_info = {
                 'estimator': model,
                 'train_scores': np.array,
@@ -1680,31 +1724,35 @@ class ClassificadorBinario:
                 'model_data': {
                     'X_train': np.array,
                     'y_train': np.array,
-                    'X_test': np.array,
-                    'y_test': np.array,
+                    'X_val': np.array,
+                    'y_val': np.array,
                 'feature_importances': pd.DataFrame
                 }
             }
+
+        Application
+        -----------
+        metrics = trainer.get_model_info(model_name='RandomForestClassifier')
         """
 
-        logger.debug(f'Retornando informações registradas do modelo {model_name}')
+        logger.debug(f'Returning all information for {model_name}')
         try:
             # Retornando dicionário do modelo
             return self.classifiers_info[model_name]
         except Exception as e:
-            logger.error(f'Erro ao retornar informações do modelo {model_name}. Exception lançada: {e}')
+            logger.error(f'Error on returning informations for {model_name}. Exception  {e}')
 
     def get_classifiers_info(self):
         """
-        Método responsável por retornar o dicionário classifiers_info contendo todas as informações de todos os modelos
+        Returns the class attribute classifiers_info with all information for all models
 
-        Parâmetros
+        Parameters
         ----------
         None
 
-        Retorno
-        -------
-        :return classifiers_info: dicionário completo dos modelos presentes na classe
+        Return
+        ------
+        :return classifiers_info: dictionary with information for all models
             classifiers_info ={
                 'model_name': model_info = {
                                 'estimator': model,
@@ -1715,8 +1763,8 @@ class ClassificadorBinario:
                                 'model_data': {
                                     'X_train': np.array,
                                     'y_train': np.array,
-                                    'X_test': np.array,
-                                    'y_test': np.array,
+                                    'X_val': np.array,
+                                    'y_val': np.array,
                                 'feature_importances': pd.DataFrame
                                 }
                             }
@@ -1727,8 +1775,8 @@ class ClassificadorBinario:
 
 """
 ---------------------------------------------------
---------------- 2. CLASSIFICAÇÃO ------------------
-         2.1 Classificador Multiclasse
+---------------- 2. CLASSIFICATION ----------------
+           2.2 Multiclass Classification
 ---------------------------------------------------
 """
 
@@ -1985,7 +2033,7 @@ class ClassificadorMulticlasse:
         ----------
         :param X_train: conjunto de features do modelo contido nos dados de treino [type: np.array]
         :param y_train: array contendo a variável resposta dos dados de treino do modelo [type: np.array]
-        :param X_test: conjunto de features do modelo contido nos dados de teste [type: np.array]
+        :param X_val: conjunto de features do modelo contido nos dados de teste [type: np.array]
         :param y_test: array contendo a variável resposta dos dados de teste do modelo [type: np.array]
         :param cv: K-folds utiliados na validação cruzada [type: int, default: 5]
         :param target_names: lista com referências para as classes [type: list, default=None]
@@ -2122,7 +2170,7 @@ class ClassificadorMulticlasse:
         Método responsável por consolidar um fluxo completo de treinamento dos classificadores, bem como
         o levantamento de métricas e execução de métodos adicionais para escolha do melhor modelo
 
-        Parâmetros
+        Parameters
         ----------
         :param set_classifiers: dicionário contendo informações dos modelos a serem treinados [type: dict]
             set_classifiers = {
@@ -2758,203 +2806,11 @@ class ClassificadorMulticlasse:
         return self.classifiers_info
 
 
-"""
----------------------------------------------------
---------------- 2. CLASSIFICAÇÃO ------------------
-       2.2. Funções de Análise de Modelos
----------------------------------------------------
-"""
-
-def save_fig(fig, output_path, img_name, tight_layout=True, dpi=300):
-    """
-    Função responsável por salvar imagens geradas pelo matplotlib/seaborn
-
-    Parâmetros
-    ----------
-    :param fig: figura criada pelo matplotlib para a plotagem gráfica [type: plt.figure]
-    :param output_file: caminho final a ser salvo (+ nome do arquivo em formato png) [type: string]
-    :param tight_layout: flag que define o acerto da imagem [type: bool, default=True]
-    :param dpi: resolução da imagem a ser salva [type: int, default=300]
-
-    Retorno
-    -------
-    Este método não retorna nenhum parâmetro além do salvamento da imagem em diretório especificado
-
-    Aplicação
-    ---------
-    fig, ax = plt.subplots()
-    save_fig(fig, output_path='output/imgs', img_name='imagem.png')
-    """
-
-    # Verificando se diretório existe
-    if not os.path.isdir(output_path):
-        logger.warning(f'Diretório {output_path} inexistente. Criando diretório no local especificado')
-        try:
-            os.makedirs(output_path)
-        except Exception as e:
-            logger.error(f'Erro ao tentar criar o diretório {output_path}. Exception lançada: {e}')
-
-    # Acertando layout da imagem
-    if tight_layout:
-        fig.tight_layout()
-
-    logger.debug('Salvando imagem no diretório especificado')
-    try:
-        output_file = os.path.join(output_path, img_name)
-        fig.savefig(output_file, dpi=300)
-        logger.info(f'Imagem salva com sucesso em {output_file}')
-    except Exception as e:
-        logger.error(f'Erro ao salvar imagem. Exception lançada: {e}')
-
-def clf_plot_feature_score_dist(data, feature, model, figsize=(16, 8), kind='boxplot', bin_range=.20, palette='magma',
-                            save=True, output_path='output/imgs', img_name='feature_score_dist.png'):
-    """
-    Função responsável por plotar a distribuição de uma determinada variável do dataset em 
-    faixas de score obtidas através das probabilidades de um modelo preditivo
-    
-    Parâmetros
-    ----------
-    :param data: base de dados a ser analisada [type: pd.DataFrame]
-    :param feature: referência da coluna a ser analisada [type: string]
-    :param model: modelo preditivo já treinado [type: estimator]
-    :param figsize: dimensões da figura de plotagem [type: tuple, default=(16, 10)]
-    :param kind: tipo de gráfico a ser plotado [type: string, default='boxplot']
-        *opções: 'boxplot', 'boxenplot', 'stripplot', 'kdeplot'
-    :param bin_range: separador das faixas de score do modelo [type: float, default=.20]
-    :param palette: colormap utilizado na plotagem gráfica [type: string, default='magma']
-    :param save: flag para indicar o salvamento da imagem gerada [type: bool, default=True]
-    :param output_path: diretório de salvamento da imagem gerada [type: string, default='output/imgs']
-    :param img_name: nome do arquivo a ser salvo [type: string, default='feature_model_score_dist.png']
-        
-    Retorno
-    -------
-    Essa função não retorna nenhum parâmetro além da figura plotada utilizando o método boxplot do seaborn
-    
-    Aplicação
-    ---------
-    # Treinando modelo preditivo
-    model = RandomForestClassifier()
-    model.fit(X_train_prep, y_train)
-    
-    # Analisando distribuição de uma variável
-    plot_feature_score_proba(X_train_prep, feature='numerical_col', model=model)
-    """
-    
-    model_name = type(model).__name__
-    logger.debug(f'Retornando probabilidades do modelo {model_name}')
-    df = data.copy()
-    try:
-        y_scores = model.predict_proba(df)[:, 1]
-    except NotFittedError as nfe:
-        logger.error(f'Modelo {model_name} não foi treinado, impossibilitando o retorno das probabilidades. Exception: {nfe}')
-        return
-    
-    logger.debug('Criando faixas com as probabilidades obtidas')
-    try:
-        bins = np.arange(0, 1.01, bin_range)
-        bins_labels = [str(round(list(bins)[i - 1], 2)) + ' a ' + str(round(list(bins)[i], 2)) for i in range(len(bins)) if i > 0]
-        df['faixa'] = pd.cut(y_scores, bins, labels=bins_labels)
-    except Exception as e:
-        logger.error(f'Erro ao criar as faixas do modelo. Exception lançada: {e}')
-        return
-    
-    logger.debug(f'Plotando análise de distribuição {kind} para a variável {feature}')
-    try:
-        fig, ax = plt.subplots(figsize=figsize)
-        
-        # Validando tipo de plotagem
-        if kind == 'boxplot':
-            sns.boxplot(x='faixa', y=feature, data=df, palette=palette)
-        elif kind == 'boxenplot':
-            sns.boxenplot(x='faixa', y=feature, data=df, palette=palette)
-        elif kind == 'stripplot':
-            sns.stripplot(x='faixa', y=feature, data=df, palette=palette)
-        elif kind == 'kdeplot':
-            # Plotando um gráfico de distribuição pra cada categoria
-            for label in bins_labels:
-                sns.kdeplot(df[df['faixa']==label][feature], ax=ax, label=label, shade=True)
-                plt.legend()
-        else:
-            logger.warning(f'Tipo de plotagem {kind} não disponível. Selecione entre ["boxplot", "boxenplot", "stripplot"]')
-            return
-        
-        ax.set_title(f'Gráfico ${kind}$ de ${feature}$ nas faixas de score do modelo ${model_name}$', size=14)
-        format_spines(ax, right_border=False)
-    except Exception as e:
-        logger.error(f'Erro ao plotar o gráfico para a variável {feature}. Exception: {e}')
-        return
-    
-    # Validando salvamento da figura
-    if save:
-        save_fig(fig=fig, output_path=output_path, img_name=img_name)
-
-def clf_cv_performance(model, X, y, cv=5, model_name=None):
-    """
-    Função responsável por calcular as principais métricas de um modelo de classificação
-    utilizando validação cruzada
-    
-    Parâmetros
-    ----------
-    :param model: estimator do modelo preditivo [type: estimator]
-    :param X: dados de entrada do modelo [type: np.array]
-    :param y: array de target do modelo [type: np.array]
-    :param cv: número de k-folds utilizado na validação cruzada [type: int, default=5]
-        
-    Retorno
-    -------
-    :return df_performance: DataFrame contendo as principais métricas de classificação [type: pd.DataFrame]
-    
-    Aplicação
-    ---------
-    results = clf_cv_performance(model=model, X=X, y=y)
-    """
-
-    # Computing metrics using cross validation
-    t0 = time.time()
-    accuracy = cross_val_score(model, X, y, cv=cv, scoring='accuracy').mean()
-    precision = cross_val_score(model, X, y, cv=cv, scoring='precision').mean()
-    recall = cross_val_score(model, X, y, cv=cv, scoring='recall').mean()
-    f1 = cross_val_score(model, X, y, cv=cv, scoring='f1').mean()
-
-    # Probas for calculating AUC
-    try:
-        y_scores = cross_val_predict(model, X, y, cv=cv, method='decision_function')
-    except:
-        # Tree based models don't have 'decision_function()' method, but 'predict_proba()'
-        y_probas = cross_val_predict(model, X, y, cv=cv, method='predict_proba')
-        y_scores = y_probas[:, 1]
-    auc = roc_auc_score(y, y_scores)
-
-    # Creating a DataFrame with metrics
-    t1 = time.time()
-    delta_time = t1 - t0
-    train_performance = {}
-    if model_name is None:
-        train_performance['model'] = model.__class__.__name__
-    else:
-        train_performance['model'] = model_name
-    train_performance['approach'] = 'Final Model'
-    train_performance['acc'] = round(accuracy, 4)
-    train_performance['precision'] = round(precision, 4)
-    train_performance['recall'] = round(recall, 4)
-    train_performance['f1'] = round(f1, 4)
-    train_performance['auc'] = round(auc, 4)
-    train_performance['total_time'] = round(delta_time, 3)
-    df_performance = pd.DataFrame(train_performance, index=train_performance.keys()).reset_index(drop=True).loc[:0, :]
-
-    # Adding information of measuring and execution time
-    cols_performance = list(df_performance.columns)
-    df_performance['anomesdia'] = datetime.now().strftime('%Y%m%d')
-    df_performance['anomesdia_datetime'] = datetime.now()
-    df_performance = df_performance.loc[:, ['anomesdia', 'anomesdia_datetime'] + cols_performance]
-
-    return df_performance
-
 
 """
 ---------------------------------------------------
-------------- 3. REGRESSÃO LINEAR -----------------
-          3.1 Treinamento e Avaliação
+------------------ 3. REGRESSION ----------------
+              1.1 Linear Regression
 ---------------------------------------------------
 """
 
