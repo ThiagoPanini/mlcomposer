@@ -37,7 +37,7 @@ reqs = [str(ir.req) for ir in install_reqs]"""
 # Criando setup
 setup(
     name='mlcomposer',
-    version='0.0.10',
+    version='0.0.11',
     author='Thiago Panini',
     author_email='thipanini94@gmail.com',
     packages=find_packages(),
