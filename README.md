@@ -18,13 +18,16 @@
 <br/>
 
 
-## Table of content
+## Table of contents
 
-- [About mlcomposer](#about-xplotter)
+- [About mlcomposer](#about-mlcomposer)
 - [Package Structure](#package-structure)
   - [Transformers Module](#transformers-module)
   - [Trainer Module](#trainer-module) 
-
+- [Examples](#examples)
+- [Usage around the world](#usage-around-the-world)
+- [Contribution](#contribution)
+- [Social Media](#social-media)
 
 ___
 
@@ -100,3 +103,108 @@ Done! With few steps and some python tricks, it was possible to build a resilien
 ___
 
 ### Trainer Module
+
+Well, by now what we can do after designing a complete pipeline for data preparation step? The answear could be straightforward: train and evaluate Machine Learning models! And that's the point the `trainer` module from `mlcomposer` gets in. With `trainer`, we can use classes already built for handling common steps for training and evaluating models considering basic ML approaches like binary and multiclass classification or linear regression.
+
+So, it's possible to define the `trainer` module as a extremely poweful tool that gives the user the hability to solve complex problems and generates useful analysis with few lines of codes wherever there's a basic ML problem. It provides classes that encapsulates most of all steps needed for completing the solution. For make it cleaner, the table below shows up what kind of problems `trainer` module can solves or, in other words, what classes are built into the module.
+
+| Class                       | Short Description                                                                                                          |
+| :-------------------------: | :------------------------------------------------------------------------------------------------------------------------: |         
+| `BinaryClassifier`          | Solves binary classification problems by delivering useful methods for training and evaluating multiple models at once     |
+| `MulticlassClassifier`      | Solves multiclass classification problems by delivering useful methods for training and evaluating multiple models at once |
+| `LinearRegressor`           | Solves linear regression problems by delivering useful methods for training and evaluating multiple models at once         |
+
+Below it will be place an example of `trainer` module usage by passing through a complete flow of a binary classification problem. Two powerful methods of `BinaryClassifier` class will be applied in order to train, evaluate, extract feature importance, plotting confusion matrix, ROC Curve, score distribution and other visual analysis: the `training_flow()` and `visual_analysis()` methods. Take a look:
+
+```python
+#[...] other imports, variable definition and data pre process
+from mlcomposer.trainer import BinaryClassifier
+
+# Creating a object
+trainer = BinaryClassifier()
+
+# Training and evaluating models
+trainer.training_flow(set_classifiers, X_train_prep, y_train, X_val_prep, y_val, 
+                      features=MODEL_FEATURES, metrics_output_path=METRICS_OUTPUT_PATH,
+                      models_output_path=MODELS_OUTPUT_PATH)
+
+# Generating and saving figures for visual analysis
+trainer.visual_analysis(features=MODEL_FEATURES, model_shap=MODEL_SHAP, 
+                        output_path=IMGS_OUTPUT_PATH)
+```
+
+The simple execution of these two methods on binary classification problems can generate the following output:
+
+```bash
+└── output
+    ├── imgs
+    │   ├── confusion_matrix.png
+    │   ├── feature_importances.png
+    │   ├── learning_curve.png
+    │   ├── metrics_comparison.png
+    │   ├── roc_curve.png
+    │   ├── score_bins_percent.png
+    │   ├── score_bins.png
+    │   ├── score_distribution.png
+    │   └── shap_analysis_modelname.png
+    ├── metrics
+    │   ├── metrics.csv
+    │   └── top_features.csv
+    └── models
+        ├── modelname_date.pkl
+```
+
+___
+
+## Installing the Package
+
+The last version of `mlcomposer` package are published and available on [PyPI repository](https://pypi.org/project/mlcomposer/)
+
+> :pushpin: **Note:** as a good practice for every Python project, the creation of a <a href="https://realpython.com/python-virtual-environments-a-primer/">virtual environment</a> is needed to get a full control of dependencies and third part packages on your code. By this way, the code below can be used for creating a new venv on your OS.
+> 
+
+```bash
+# Creating and activating venv on Linux
+$ python -m venv <path_venv>/<name_venv>
+$ source <path_venv>/<nome_venv>/bin/activate
+
+# Creating and activating venv on Windows
+$ python -m venv <path_venv>/<name_venv>
+$ <path_venv>/<nome_venv>/Scripts/activate
+```
+
+With the new venv active, all you need is execute the code below using pip for installing xplotter package (upgrading pip is optional):
+
+```bash
+$ pip install --upgrade pip
+$ pip install mlcomposer
+```
+
+The mlcomposer package is built in a layer above some other python packages like pandas, numpy, sklearn and shap. Because of that, when installing mlcomposer, the pip utility will also install all dependencies linked to the package.
+
+## Examples
+
+For making the package usage easy as possible for new users, it's placed on this Github repository a direcotry identified as `examples/` with python scripts with complete examples using `transformers` and `trainer` modules for solving differente Machine Learning problems with different approachs. 
+
+## Usage Around the World
+
+By now, the `mlcomposer` package was first introduced on Kaggle's Tabular Playground Series of May 2021 with the [linked notebook](https://www.kaggle.com/thiagopanini/presenting-xplotter-and-mlcomposer-on-tps-may21) by user [Thiago Panini](https://www.kaggle.com/thiagopanini). This notebooks also uses the [xplotter](https://github.com/ThiagoPanini/xplotter) module for making the Exploratory Data Analysis and that would be a good idea too for getting insights from data. By now, the notebook reaches a bronze model with around 15 upvotes.
+
+<div align="center">
+   <img src="https://i.imgur.com/nsVnOmX.png" height=85 width=900>
+</div>
+
+___
+
+## Contribution
+
+The mlcomposer python package is an open source implementation and the more people use it, the more happy the developers will be. So if you want to contribute with mlcomposer, please feel free to follow the best practices for implementing coding on this github repository through creating new branches, making merge requests and pointig out whenever you think there is a new topic to explore or a bug to be fixed.
+
+Thank you very much for reaching this and it will be a pleasure to have you as mlcomposer user or developer.
+
+___
+
+## Social Media
+
+* Follow me on LinkedIn: https://www.linkedin.com/in/thiago-panini/
+* See my other Python packages: https://github.com/ThiagoPanini
