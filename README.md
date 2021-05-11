@@ -41,7 +41,7 @@ ___
 
 ## About mlcomposer
 
-Have ever tried to apply Machine Learning for solving a problem and found yourself lost on how much code you needed in order to reach your goal? Have you ever though it was too hard to do it? Don't be afraid because this package certainly can help you improving your skills and your modeling flow. Meet **mlcomposer** as a useful python package for helping users to use some built in classes and functions for applying Machine Learning as easy as possible. 
+Have you ever tried to apply Machine Learning for solving a problem and found yourself lost on how much code you needed in order to reach your goal? Have you ever though it was too hard to do it? Don't be afraid because this package certainly can help you improving your skills and your modeling flow. Meet **mlcomposer** as a useful python package for helping users to use some built in classes and functions for applying Machine Learning as easy as possible. 
 
 With **mlcomposer**, you can:
 * Build data prep solutions with custom pipelines by using python classes that handle transformation steps
