@@ -18,9 +18,9 @@
 
 <div align="center">  
   
-  ![Downloads](https://img.shields.io/pypi/dd/mlcomposer?color=darkblue)
+  ![Downloads](https://img.shields.io/pypi/dm/mlcomposer?color=darkblue)
   ![Downloads](https://img.shields.io/pypi/dw/mlcomposer?color=blue)
-  ![Downloads](https://img.shields.io/pypi/dm/mlcomposer?color=lightblue)
+  ![Downloads](https://img.shields.io/pypi/dd/mlcomposer?color=lightblue)
 
 </div>
 <br/>
