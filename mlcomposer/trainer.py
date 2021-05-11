@@ -2365,7 +2365,7 @@ class MulticlassClassifier:
         """
 
         # Dealing with target array if encoded_target attribute is True
-        if not self.encoded_target:
+        if self.encoded_target:
             y_true = pd.get_dummies(y_true).values
             y_pred = pd.get_dummies(y_pred).values
 
@@ -2718,6 +2718,10 @@ class MulticlassClassifier:
             # Plotting feature importances
             if feat_imp:
                 self.plot_feature_importance(features=features, save=save, output_path=output_path)
+
+            # Plotting confusion matrix
+            if cfmx:
+                self.plot_confusion_matrix()
 
             # Plotting shap analysis
             if model_shap is not None:
