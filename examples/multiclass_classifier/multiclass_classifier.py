@@ -45,7 +45,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from mlcomposer.trainer import ClassificadorMulticlasse
+from mlcomposer.trainer import MulticlassClassifier
 
 
 """
@@ -111,7 +111,7 @@ set_classifiers = {name: {'model': obj, 'params': {}} for (name, obj) in zip(mod
 """
 
 # Instanciando novo objeto
-trainer = ClassificadorMulticlasse()
+trainer = MulticlassClassifier()
 
 # Realizando treinamento e avaliação dos modelos
 trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, target_names=TARGET_NAMES,
