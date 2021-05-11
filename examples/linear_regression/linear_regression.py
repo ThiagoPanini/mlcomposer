@@ -46,16 +46,16 @@ from dotenv import load_dotenv, find_dotenv
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from mlcomposer.transformers import FiltraColunas, ModificaTipoPrimitivo, \
-    EliminaDuplicatas, DynamicLogTransformation, DynamicScaler, \
-    DummiesEncoding, AgrupamentoCategoricoFinal, LogTransformation
+from mlcomposer.transformers import ColumnSelection, DtypeModifier, \
+    DropDuplicates, DynamicLogTransformation, DynamicScaler, \
+    DummiesEncoding, CategoricalMapper, LogTransformation
 
 # Modelagem dos dados
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
-from mlcomposer.trainer import RegressorLinear
+from mlcomposer.trainer import LinearRegressor
 
 
 """
@@ -112,8 +112,8 @@ CAT_FEATURES = [col for col, dtype in train[INITIAL_FEATURES].dtypes.items() if 
 
 # Pipeline inicial de preparação de dados
 initial_prep_pipeline = Pipeline([
-    ('col_filter', FiltraColunas(features=INITIAL_FEATURES)),
-    ('cat_agrup', AgrupamentoCategoricoFinal(cat_dict=CAT_GROUP_DICT, other_tag=OTHER_TAG)),
+    ('col_filter', ColumnSelection(features=INITIAL_FEATURES)),
+    ('cat_agrup', CategoricalMapper(cat_dict=CAT_GROUP_DICT, other_tag=OTHER_TAG)),
     ('log_target', LogTransformation(cols_to_log=TARGET))
 ])
 
@@ -276,7 +276,7 @@ set_regressors = {name: {'model': obj, 'params': param} for (name, obj, param) i
 """
 
 # Instanciando trainer e aplicando treinamento
-trainer = RegressorLinear()
+trainer = LinearRegressor()
 
 # Realizando treinamento e avaliação dos modelos
 trainer.training_flow(set_regressors, X_train_prep, y_train, X_val_prep, y_val, 
