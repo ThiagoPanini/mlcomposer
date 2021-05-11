@@ -10,11 +10,17 @@
 <div align="center">  
  
   [![PyPI](https://img.shields.io/pypi/v/mlcomposer?color=blueviolet)](https://pypi.org/project/mlcomposer/)
+  ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mlcomposer?color=green)
+  ![PyPI - Status](https://img.shields.io/pypi/status/mlcomposer)
+
+</div>
+
+
+<div align="center">  
+  
   ![Downloads](https://img.shields.io/pypi/dd/mlcomposer?color=darkblue)
   ![Downloads](https://img.shields.io/pypi/dw/mlcomposer?color=blue)
   ![Downloads](https://img.shields.io/pypi/dm/mlcomposer?color=lightblue)
-  ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mlcomposer?color=green)
-  ![PyPI - Status](https://img.shields.io/pypi/status/mlcomposer)
 
 </div>
 <br/>
