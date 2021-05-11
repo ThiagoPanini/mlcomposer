@@ -1,9 +1,9 @@
 model,feature,importance,anomesdia_datetime
-DecisionTreeClassifier,petal length (cm),0.9061433868879218,2021-04-21 20:58:54.312566
-DecisionTreeClassifier,petal width (cm),0.07718647349965893,2021-04-21 20:58:54.312566
-DecisionTreeClassifier,sepal width (cm),0.016670139612419255,2021-04-21 20:58:54.312566
-DecisionTreeClassifier,sepal length (cm),0.0,2021-04-21 20:58:54.312566
-RandomForestClassifier,petal length (cm),0.43999397414456937,2021-04-21 20:58:54.331206
-RandomForestClassifier,petal width (cm),0.4215215887397244,2021-04-21 20:58:54.331206
-RandomForestClassifier,sepal length (cm),0.10809762464246378,2021-04-21 20:58:54.331206
-RandomForestClassifier,sepal width (cm),0.030386812473242528,2021-04-21 20:58:54.331206
+DecisionTreeClassifier,petal length (cm),0.9061433868879218,2021-05-10 22:30:57.419558
+DecisionTreeClassifier,petal width (cm),0.07718647349965893,2021-05-10 22:30:57.419558
+DecisionTreeClassifier,sepal width (cm),0.016670139612419255,2021-05-10 22:30:57.419558
+DecisionTreeClassifier,sepal length (cm),0.0,2021-05-10 22:30:57.419558
+RandomForestClassifier,petal length (cm),0.43999397414456937,2021-05-10 22:30:57.438751
+RandomForestClassifier,petal width (cm),0.4215215887397244,2021-05-10 22:30:57.438751
+RandomForestClassifier,sepal length (cm),0.10809762464246378,2021-05-10 22:30:57.438751
+RandomForestClassifier,sepal width (cm),0.030386812473242528,2021-05-10 22:30:57.438751
