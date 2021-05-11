@@ -118,8 +118,6 @@ trainer.training_flow(set_classifiers, X_train, y_train, X_val, y_val, target_na
                       features=MODEL_FEATURES, metrics_output_path=METRICS_OUTPUT_PATH,
                       models_output_path=MODELS_OUTPUT_PATH)
 
-trainer.plot_confusion_matrix(classes=TARGET_NAMES, save=True, output_path=IMGS_OUTPUT_PATH)
-
 # Gerando e salvando gráficos de análises visuais
 trainer.visual_analysis(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, features=MODEL_FEATURES, 
                         target_names=TARGET_NAMES, output_path=IMGS_OUTPUT_PATH)
