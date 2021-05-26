@@ -166,7 +166,7 @@ ___
 
 ## Installing the Package
 
-The last version of `mlcomposer` package are published and available on [PyPI repository](https://pypi.org/project/mlcomposer/)
+The latest version of `mlcomposer` package are published and available on [PyPI repository](https://pypi.org/project/mlcomposer/)
 
 > :pushpin: **Note:** as a good practice for every Python project, the creation of a <a href="https://realpython.com/python-virtual-environments-a-primer/">virtual environment</a> is needed to get a full control of dependencies and third part packages on your code. By this way, the code below can be used for creating a new venv on your OS.
 > 
@@ -181,7 +181,7 @@ $ python -m venv <path_venv>/<name_venv>
 $ <path_venv>/<nome_venv>/Scripts/activate
 ```
 
-With the new venv active, all you need is execute the code below using pip for installing xplotter package (upgrading pip is optional):
+With the new venv active, all you need is execute the code below using pip for installing the package (upgrading pip is optional):
 
 ```bash
 $ pip install --upgrade pip
